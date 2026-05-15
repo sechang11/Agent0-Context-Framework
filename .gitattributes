@@ -1,0 +1,8 @@
+# Force LF for shell scripts — CRLF breaks the shebang/parser on Linux & macOS.
+*.sh text eol=lf
+
+# JSON should be LF too, for predictable diffs.
+*.json text eol=lf
+
+# Markdown can take whatever the platform prefers (cosmetic).
+*.md text
