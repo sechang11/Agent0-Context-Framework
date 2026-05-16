@@ -44,6 +44,14 @@ scripts/
   bootstrap.sh                      One-shot bash installer. Run via curl | bash in projects
                                     that don't yet have /update-framework.
 
+docs/                               Operating guide — four workflow docs covering setup,
+                                    upgrade, extension, and sync.
+  README.md                           Index + quick reference
+  setup-new-project.md
+  upgrade-existing-project.md
+  extending-the-framework.md
+  syncing-updates.md
+
 .github/                            Canonical source of truth (Copilot-native).
   copilot-instructions.md           Project overview + hard rules (always loaded)
   AGENTS.md                         Agent roster + routing
@@ -142,7 +150,7 @@ curl -fsSL https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/
 
 Requirements: `curl` and `python` (3.x, for JSON parsing in the bootstrap). No `gh` CLI, no auth, no submodules.
 
-See **CUSTOMIZATION.md → Updating the framework** for the compatibility rules and changelog format.
+See **CUSTOMIZATION.md → Updating the framework** for the compatibility rules and changelog format. For step-by-step workflows (setting up a new project, upgrading a stale one, extending the framework, syncing updates), see [`docs/`](./docs/README.md).
 
 ## Philosophy
 

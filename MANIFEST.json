@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-15",
+  "version": "2026-05-15a",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -47,6 +47,13 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-15a",
+      "notes": [
+        "Overhauled /report prompt. Agents now break their rating into five sub-dimensions (1–10 each) with a one-line justification per dimension; composite is the mean. 'Build next' is now a priority/action/why/effort table with P0/P1/P2 levels and S/M/L effort tags. Output file gains a composite scorecard, top-priorities table, and trends-since-last-report table. Phase 5 console summary is now substantial (scorecard, top 3 priorities, notable observations) rather than a one-liner — addresses the 'no response shown' problem.",
+        "Agents who return thin output get one retry; if they still won't expand, they're flagged in the scorecard."
+      ]
+    },
     {
       "version": "2026-05-15",
       "notes": [
