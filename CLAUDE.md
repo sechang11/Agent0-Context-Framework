@@ -67,6 +67,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/install-debug-panel` | Install the Stage 3 web-debug panel at `/__debug` (off by default, gated by env var). Routes via `@architect` and `@debug-panel-engineer` |
 | `/demolish-debug` | Fully remove the web-debug panel from the host project. Two confirmation gates. Verification.md files untouched |
 | `/version` | Report installed framework version, latest available upstream, the gap, available commands, and recent changelog entries. Read-only. Works offline |
+| `/help` | Friendly newbie-oriented overview — agents, commands, concepts, workflows. Surfaces `docs/getting-started.md` in chat. Optional topic flag (`agents`, `commands`, `concepts`, `workflow`, `debugging`, `updating`, `faq`). Read-only |
 
 ## Specs
 

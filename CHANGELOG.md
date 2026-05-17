@@ -11,6 +11,15 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-15g
+
+- Added /help — the newbie on-ramp. Friendly overview command that emits a goal-oriented digest (no args) or drills into a specific topic (agents, commands, concepts, workflow, debugging, updating, faq). Reads from docs/getting-started.md locally; falls back to GitHub if the local file is missing. Adapts to what's actually installed in the project (e.g. lists domain-expert agents alongside the standard roster).
+
+- Added docs/getting-started.md — the long-form newbie-friendly guide. Covers what the framework is, the five-minute tour, every agent and when to call them, every slash command organized by user goal, the big concepts (dual-tool layout, specs, verification, bugs, debug surface, update flow), and a FAQ. Plain language, no jargon without explaining. This is the comprehensive document /help draws from.
+
+- docs/getting-started.md is in the manifest as additive — adopted projects get a local copy via /update-framework, so /help works offline and developers don't have to go to GitHub to read it. The other docs/ files (workflow guides for framework maintainers) remain repo-internal.
+
+
 ## 2026-05-15f
 
 - Added /version — read-only sibling of /update-framework. Reports installed version (.github/.framework-version), latest available upstream (MANIFEST.json), the gap between them, the full list of available slash commands, and a 'what's new since your last sync' digest. Network-tolerant — degrades to local-only when offline. Supports --offline (skip remote check) and --changelog (print full history).
