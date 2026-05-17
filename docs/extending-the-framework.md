@@ -80,12 +80,23 @@ Add the row to the slash-commands table so the framework's CLAUDE.md stays in sy
 | `/refactor` | <purpose> |
 ```
 
-### 5. Commit and push
+### 5. Regenerate CHANGELOG.md
+
+After editing `MANIFEST.json`, run the changelog generator so the human-readable `CHANGELOG.md` at the repo root stays in sync:
+
+```bash
+python scripts/generate-changelog.py
+```
+
+This reads the `changelog` array from `MANIFEST.json` and rewrites `CHANGELOG.md`. Don't edit `CHANGELOG.md` by hand — the manifest is the source of truth.
+
+### 6. Commit and push
 
 ```bash
 git add .github/prompts/refactor.prompt.md \
         .claude/commands/refactor.md \
         MANIFEST.json \
+        CHANGELOG.md \
         CLAUDE.md
 git commit -m "Add /refactor slash command"
 git push

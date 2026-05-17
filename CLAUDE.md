@@ -66,6 +66,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/cover` | Generate a code-derived `verification.md` for an EXISTING feature with no spec — brownfield on-ramp |
 | `/install-debug-panel` | Install the Stage 3 web-debug panel at `/__debug` (off by default, gated by env var). Routes via `@architect` and `@debug-panel-engineer` |
 | `/demolish-debug` | Fully remove the web-debug panel from the host project. Two confirmation gates. Verification.md files untouched |
+| `/version` | Report installed framework version, latest available upstream, the gap, available commands, and recent changelog entries. Read-only. Works offline |
 
 ## Specs
 
