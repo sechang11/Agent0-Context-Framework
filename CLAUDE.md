@@ -59,6 +59,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/agents` | List the agents assigned to this project, one specialty line each |
 | `/report` | Convene every agent for a roundtable progress review; writes `PROGRESS_REPORT.md` |
 | `/update-framework` | Pull latest additive files (commands, agent shims, manifest) from the public framework repo |
+| `/report-bug` | Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion |
 
 ## Specs
 

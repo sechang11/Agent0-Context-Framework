@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-15a",
+  "version": "2026-05-15b",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -16,12 +16,16 @@
     { "path": ".claude/commands/agents.md",             "class": "additive" },
     { "path": ".claude/commands/report.md",             "class": "additive" },
     { "path": ".claude/commands/update-framework.md",   "class": "additive" },
+    { "path": ".claude/commands/report-bug.md",         "class": "additive" },
 
     { "path": ".github/prompts/adopt-framework.prompt.md",  "class": "additive" },
     { "path": ".github/prompts/spec.prompt.md",             "class": "additive" },
     { "path": ".github/prompts/agents.prompt.md",           "class": "additive" },
     { "path": ".github/prompts/report.prompt.md",           "class": "additive" },
     { "path": ".github/prompts/update-framework.prompt.md", "class": "additive" },
+    { "path": ".github/prompts/report-bug.prompt.md",       "class": "additive" },
+
+    { "path": ".github/bugs/README.md",                     "class": "additive" },
 
     { "path": ".claude/agents/architect.md",                  "class": "additive" },
     { "path": ".claude/agents/software-engineer.md",          "class": "additive" },
@@ -43,10 +47,18 @@
     { "command": "/spec",              "purpose": "Generate `requirements.md` + `design.md` + `tasks.md` for non-trivial work" },
     { "command": "/agents",            "purpose": "List the agents assigned to this project, one specialty line each" },
     { "command": "/report",            "purpose": "Convene every agent for a roundtable progress review; writes `PROGRESS_REPORT.md`" },
-    { "command": "/update-framework",  "purpose": "Pull the latest additive files (commands, agent shims, manifest) from the public framework repo" }
+    { "command": "/update-framework",  "purpose": "Pull the latest additive files (commands, agent shims, manifest) from the public framework repo" },
+    { "command": "/report-bug",        "purpose": "Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion" }
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-15b",
+      "notes": [
+        "Added /report-bug — captures a structured bug report at .github/bugs/{timestamp}-{slug}.md. Bundles the user's description (intent / expected / actual / where) with auto-captured project state (git diff, recent commits, active spec, environment, framework version) and suggests a routing agent based on what the bug touches. Writes the file and stops — does NOT auto-invoke the agent; user controls dispatch. This is Stage 1 of the spec-bound debug surface: the structured hand-back channel that replaces 'paste console, screenshot, describe what I clicked.' Stage 2 (verification artifacts) and Stage 3 (web debug panel) will build on top.",
+        "Added .github/bugs/ directory with README documenting the bug-report lifecycle (open → in-progress → resolved / wont-fix / cant-reproduce)."
+      ]
+    },
     {
       "version": "2026-05-15a",
       "notes": [
