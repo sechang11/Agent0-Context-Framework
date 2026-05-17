@@ -1,0 +1,167 @@
+---
+mode: agent
+description: Bootstrap or run a verification.md for a spec — turns acceptance criteria into runnable checkpoints, executes the automated ones, walks the user through manual ones, records pass/fail.
+---
+
+# /verify
+
+Verify that a spec's acceptance criteria actually hold. Either **bootstraps** a `verification.md` from the spec (when none exists) or **runs** the existing verification (when one does), depending on file state.
+
+This is Stage 2 of the spec-bound debug surface. It's the artifact that Stage 3 (the web debug panel) will later surface as live, route-keyed content.
+
+## Invocation patterns
+
+| Pattern | What it does |
+|---|---|
+| `/verify` | Lists every spec in `.github/specs/` with its verification status. The user picks one. |
+| `/verify {feature}` | If `.github/specs/{feature}/verification.md` exists → **runs** it. If not → **bootstraps** it. |
+| `/verify {feature} --bootstrap` | Forces bootstrap mode. Overwrites any existing `verification.md`. Use after a major spec change. |
+| `/verify {feature} --dry-run` | Runs through the checkpoints without executing automated commands or asking for manual results. Useful for sanity-checking the verification.md itself. |
+
+`{feature}` is the kebab-case directory name under `.github/specs/`.
+
+## Phase 1 — Resolve the target
+
+1. If no `{feature}` was provided, list every directory in `.github/specs/` (excluding `_template/` and `README.md`). For each, show:
+   - Feature name
+   - Does `verification.md` exist? (yes/no)
+   - If yes, what's the `last_verified` timestamp and `status` from its frontmatter?
+   - One-line summary from `requirements.md` (first paragraph)
+
+   Then ask the user which feature to verify, or stop and let them re-invoke.
+
+2. If `{feature}` was provided, confirm `.github/specs/{feature}/` exists. If not, list the closest matches and stop.
+
+## Phase 2 — Decide bootstrap vs. run
+
+- **Bootstrap mode** when: `verification.md` doesn't exist OR `--bootstrap` was passed.
+- **Run mode** when: `verification.md` exists AND `--bootstrap` was not passed.
+- **Dry-run mode**: like run mode, but skip execution.
+
+## Phase 3a — Bootstrap mode
+
+Route to the **verification-engineer** agent via the Task tool with this brief:
+
+> Bootstrap the verification.md for the spec at `.github/specs/{feature}/`. Read `requirements.md`, `design.md`, and `tasks.md`. Translate the acceptance criteria into checkpoints following the structure in your role definition (`.github/agents/verification-engineer.agent.md`). Pick stack-appropriate automation tooling — check `package.json`, `pyproject.toml`, etc. for what's already in use. Don't add new dependencies. Write the file to `.github/specs/{feature}/verification.md`. Return a summary of what was written: number of checkpoints, automation coverage (X of Y automated), and any spec gaps you flagged.
+
+When the agent returns:
+
+1. Read the new `verification.md` to confirm it exists.
+2. Print a console summary (see Phase 5).
+
+## Phase 3b — Run mode
+
+Route to the **verification-engineer** agent via the Task tool with this brief:
+
+> Run the verification for the spec at `.github/specs/{feature}/`. Read its `verification.md` and walk through every checkpoint in order:
+>
+> - **automated** checkpoints: execute the `Automation:` command via Bash. Record the exit code. Pass if exit 0, fail otherwise. Capture the last ~15 lines of stdout/stderr for the report.
+> - **manual** checkpoints: print the steps to the user and ask them to confirm pass / fail / skip with a one-line note.
+> - **mixed** checkpoints: run the automated portion first; if it passes, walk the manual portion.
+>
+> For each checkpoint, update its `Last result` field in `verification.md` to `pass`, `fail`, or `skip` with the current timestamp.
+>
+> After every checkpoint has been run or skipped, update the frontmatter:
+>
+> - `last_verified` to the current timestamp.
+> - `status` based on results: `passing` (all pass), `failing` (≥1 fail, none skipped), `partial` (any skipped or mixed-with-fail).
+>
+> Return a summary: total CPs, passes, fails, skips, and any captured stderr from failing automated checkpoints.
+
+When the agent returns:
+
+1. Print a console summary (see Phase 5).
+2. If any checkpoint failed, suggest the dispatch line: `@software-engineer investigate .github/specs/{feature}/verification.md` (or `@verification-engineer` if the issue is the verification itself, not the feature).
+
+## Phase 3c — Dry-run mode
+
+Like run mode, but the brief to verification-engineer changes:
+
+> Walk through the verification.md for `.github/specs/{feature}/` **without executing** automated commands or asking the user about manual ones. For each checkpoint, sanity-check that:
+>
+> - The Steps section is concrete and complete.
+> - The Pass/Fail criteria are observable from outside the feature.
+> - The Automation command (if any) references something that exists.
+> - The Surface is one of the surfaces listed in the file's Surfaces section.
+>
+> Return a list of any structural issues found. Do not modify the file.
+
+Use this when you want to validate the verification.md itself without running it — e.g. after editing it by hand.
+
+## Phase 4 — (optional) Bug filing on failure
+
+If run mode produced any failing checkpoints, ask the user:
+
+> {N} checkpoint(s) failed. File a bug report?
+
+If yes, invoke the `/report-bug` flow with a pre-filled title like `Verification failed for {feature}: CP-{N} ({checkpoint description})` and the failing checkpoint's captured stderr as the "what actually happened" answer. This closes the loop between Stage 1 (bug filing) and Stage 2 (verification).
+
+If no, just leave the updated verification.md as the record.
+
+## Phase 5 — Print console summary
+
+After every mode, print this structure to chat:
+
+**Bootstrap mode:**
+
+```
+═══ Verification bootstrapped — {feature} ═══
+
+  File:        .github/specs/{feature}/verification.md
+  Checkpoints: {N} total ({A} automated, {M} manual, {X} mixed)
+  Status:      draft (run /verify {feature} to execute)
+
+{If any spec gaps were flagged:}
+  Spec gaps the agent flagged:
+    • {gap 1}
+    • {gap 2}
+    These should be clarified in requirements.md before verification is meaningful.
+```
+
+**Run mode:**
+
+```
+═══ Verification run — {feature} — {YYYY-MM-DD HH:MM} ═══
+
+  Status:  passing | failing | partial
+  Results: {P} pass, {F} fail, {S} skip ({N} total)
+
+  Failures:
+    • CP-{N}: {description} — {one-line reason, e.g. "exit 1 from `npm run verify:auth -- --case=expired-token`"}
+    • CP-{N}: …
+
+  Skipped:
+    • CP-{N}: {description} ({user's reason})
+
+  Updated: .github/specs/{feature}/verification.md (last_verified field + per-CP results)
+
+{If any failures, suggest:}
+  To investigate failures:
+    @software-engineer investigate .github/specs/{feature}/verification.md
+
+  To file a bug report:
+    /report-bug Verification failed for {feature}: CP-{N}
+```
+
+**Dry-run mode:**
+
+```
+═══ Verification dry-run — {feature} ═══
+
+  Structural issues found: {N}
+
+    • {issue 1, with CP reference}
+    • {issue 2, …}
+
+  No changes written. Fix issues by hand or re-bootstrap with /verify {feature} --bootstrap.
+```
+
+## Rules
+
+- **Don't write or modify production code.** Verification is read-mostly. The verification-engineer creates verification.md; running just updates the result fields inside it.
+- **Don't install new dependencies.** If a checkpoint requires a tool that's not installed, mark it `manual` instead.
+- **Don't commit or stage anything.** The user reviews and commits.
+- **Run mode is idempotent.** Re-running with no code changes should produce the same results.
+- **Always update the timestamp** in `last_verified` after a run — even if every checkpoint was skipped. The act of running is itself a checkpoint.
+- **Failing checkpoints don't auto-route to agents.** Print the dispatch suggestion; let the user decide. (Same pattern as `/report-bug`.)
+- **Dry-run never modifies the file.** Period. It's a linter.

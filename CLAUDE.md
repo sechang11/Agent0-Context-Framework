@@ -45,6 +45,7 @@ Claude Code agent shims live in `.claude/agents/`. Each is a thin wrapper that d
 | `code-reviewer` | General code review |
 | `security-reviewer` | Security findings, severity-ranked |
 | `test-engineer` | Coverage gaps, untested edge cases |
+| `verification-engineer` | Turns spec acceptance criteria into runnable `verification.md` checkpoints; used by `/verify` |
 
 See `.github/AGENTS.md` for routing rules and ambiguous-case examples.
 
@@ -60,6 +61,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/report` | Convene every agent for a roundtable progress review; writes `PROGRESS_REPORT.md` |
 | `/update-framework` | Pull latest additive files (commands, agent shims, manifest) from the public framework repo |
 | `/report-bug` | Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion |
+| `/verify` | Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline |
 
 ## Specs
 

@@ -34,6 +34,7 @@ If the file you'd want to read doesn't exist, proceed without it. The framework 
 | Code Reviewer | `code-reviewer.agent.md` | General code review |
 | Security Reviewer | `security-reviewer.agent.md` | Security findings, severity-ranked |
 | Test Engineer | `test-engineer.agent.md` | Coverage gaps, untested edge cases |
+| Verification Engineer | `verification-engineer.agent.md` | Turns spec acceptance criteria into runnable verification.md checkpoints; used by `/verify` |
 
 Pick **one** primary agent per task. You may use a second for validation (e.g. `@security-reviewer` after `@architect`). Don't stack three.
 
@@ -58,6 +59,7 @@ Follow `.github/workflow/ai-dev-lifecycle.md` if present:
 3. **Implementation** — match existing patterns; tests as you go.
 4. **Tests** — `@test-engineer` flags coverage gaps.
 5. **Reviews** — `@security-reviewer` if security-sensitive; `@code-reviewer` otherwise.
+6. **Verification** — `/verify {feature}` bootstraps `verification.md` from the spec via `@verification-engineer`; re-runs it to confirm the feature actually works end to end. Failing checkpoints route through `/report-bug`.
 
 ## Project-specific reminders
 
