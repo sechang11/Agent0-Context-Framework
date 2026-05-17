@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-15g",
+  "version": "2026-05-15h",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -77,6 +77,16 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-15h",
+      "notes": [
+        "Added /cover --discover mode. Scans the codebase, groups surfaces into proposed features (using path-prefix, directory, naming-similarity, and adjacent-surface heuristics), and presents a structured proposal to the user. The user accepts (y), edits (e — walks each feature with rename/split/merge/drop/claim-unclaimed options), or cancels (n) before ANY file is written. After confirmation, batch-runs /cover for each feature in sequence with a one-line progress marker. Final summary lists checkpoints + concerns per feature and reminds the user that all output is code-derived (snapshots, not contracts).",
+        "Added 'What counts as a feature?' section to the /cover prompt — defines the feature-vs-surface distinction (one feature = one verification.md = many surfaces; two features can share a surface) and gives heuristics for picking boundaries.",
+        "Updated /cover shim with the new invocation patterns and a feature-vs-endpoint clarification.",
+        "Updated docs/getting-started.md /cover section with the same feature-vs-surface model and --discover usage. Added FAQ entry 'How do I pick feature boundaries for /cover?' so /help drills into this when users ask.",
+        "/help inherits the changes automatically — it reads from getting-started.md, so the new FAQ entry and /cover guidance surface via /help faq and /help commands without a separate prompt edit."
+      ]
+    },
     {
       "version": "2026-05-15g",
       "notes": [

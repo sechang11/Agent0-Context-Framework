@@ -83,10 +83,16 @@ After spec is written, `@architect` reviews `design.md` before you start coding.
 ### "I want to document an existing feature"
 
 ```
-/cover {feature-name}
+/cover {feature-name}                                  # surfaces interactively confirmed
+/cover {feature-name} --surfaces "/login,/api/auth/*"  # surfaces given explicitly
+/cover --discover                                       # scan codebase, propose features, confirm before writing
 ```
 
 You have code that works but no spec. `/cover` reads the code at surfaces you point it at (routes, endpoints, files) and writes a **verification.md** documenting current observable behavior. This is the on-ramp for projects that adopted Agent0 after they had code.
+
+**Feature, not endpoint.** A feature is a coherent logical concern someone would name in a product meeting — "login," "checkout," "user signup." A surface is where it manifests in code (a route, an endpoint, a file). One feature → one verification.md → many surfaces. Two features can share a surface (e.g. `POST /api/auth/login` might be touched by both "password login" and "magic-link login") — both verification.md files list it in their `Surfaces` section. See the FAQ for picking feature boundaries.
+
+**If you don't know the codebase well enough to enumerate features by hand**, run `/cover --discover`. The agent scans the codebase, proposes a breakdown (`auth-flow`, `dashboard`, `checkout`, etc., with the surfaces grouped under each), and waits for your confirmation. You can accept (`y`), edit groupings (`e` — walk each proposed feature with rename / split / merge / drop options), or cancel (`n`). **No files are written until you confirm the final plan.** Then it batch-runs `/cover` for each confirmed feature in sequence.
 
 The output is marked `source: code` — important distinction. It documents what the code *does*, not what it *should* do. If the code has a bug today, the checkpoint will say "currently: the code does the buggy thing." Suspicious behavior gets flagged as a separate `## Concerns` section, not as a checkpoint.
 
@@ -253,6 +259,26 @@ After that runs once, `/update-framework` is installed and the project never nee
 `/spec` is a **command** — a pre-written workflow. It produces three files (requirements, design, tasks) and routes to `@architect` for design review.
 
 You'd use `/spec` first (for non-trivial work), then `@software-engineer` to implement against the spec.
+
+### How do I pick feature boundaries for `/cover`?
+
+A **feature** is something a PM or designer would name — "login," "password reset," "user signup," "checkout." A **surface** is where it manifests in code — a route, an endpoint, a file, a CLI command.
+
+The relationship is many-to-many:
+
+- One feature can touch multiple surfaces. "User signup" touches `/signup`, `POST /api/users`, `POST /api/auth/login`, and the welcome-email worker.
+- Multiple features can share a surface. `POST /api/auth/login` might handle password login, magic-link login, and 2FA verification — three features sharing one endpoint.
+
+Each feature gets one `verification.md`. Two features that share a surface get two files, both listing that surface in their `Surfaces` section.
+
+Heuristics:
+
+- **A feature is something a PM would name.** "Login flow" yes; "the third branch of the login handler" no.
+- **One paragraph of requirements worth of scope.** If you need a multi-level outline to describe it, it's probably more than one feature.
+- **Coherent behavior.** Two checkpoints that always pass-or-fail together belong to one feature; two whose pass/fail are independent are probably different features.
+- **When in doubt, split smaller.** Easier to merge two verification.md files later than to disentangle a bundled one.
+
+If you can't decide, run `/cover --discover` — the agent scans your codebase and proposes feature boundaries, and you confirm or edit them before any files are written.
 
 ### What's the difference between `@verification-engineer` and `@test-engineer`?
 

@@ -11,6 +11,19 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-15h
+
+- Added /cover --discover mode. Scans the codebase, groups surfaces into proposed features (using path-prefix, directory, naming-similarity, and adjacent-surface heuristics), and presents a structured proposal to the user. The user accepts (y), edits (e — walks each feature with rename/split/merge/drop/claim-unclaimed options), or cancels (n) before ANY file is written. After confirmation, batch-runs /cover for each feature in sequence with a one-line progress marker. Final summary lists checkpoints + concerns per feature and reminds the user that all output is code-derived (snapshots, not contracts).
+
+- Added 'What counts as a feature?' section to the /cover prompt — defines the feature-vs-surface distinction (one feature = one verification.md = many surfaces; two features can share a surface) and gives heuristics for picking boundaries.
+
+- Updated /cover shim with the new invocation patterns and a feature-vs-endpoint clarification.
+
+- Updated docs/getting-started.md /cover section with the same feature-vs-surface model and --discover usage. Added FAQ entry 'How do I pick feature boundaries for /cover?' so /help drills into this when users ask.
+
+- /help inherits the changes automatically — it reads from getting-started.md, so the new FAQ entry and /cover guidance surface via /help faq and /help commands without a separate prompt edit.
+
+
 ## 2026-05-15g
 
 - Added /help — the newbie on-ramp. Friendly overview command that emits a goal-oriented digest (no args) or drills into a specific topic (agents, commands, concepts, workflow, debugging, updating, faq). Reads from docs/getting-started.md locally; falls back to GitHub if the local file is missing. Adapts to what's actually installed in the project (e.g. lists domain-expert agents alongside the standard roster).

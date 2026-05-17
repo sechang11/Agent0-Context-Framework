@@ -26,8 +26,159 @@ In practice this means:
 | `/cover` | Interactive — asks for the feature name and surfaces |
 | `/cover {feature-name}` | Asks the user to list surfaces; agent suggests candidates from the codebase |
 | `/cover {feature-name} --surfaces "/login,/api/auth/*,components/AuthGuard.tsx"` | Surfaces given explicitly; runs non-interactively |
+| `/cover --discover` | Scan the codebase, propose feature boundaries, confirm with user, batch-cover all confirmed features. See the `--discover mode` section below. |
 
 `{feature-name}` is kebab-case. The resulting verification lives at `.github/specs/{feature-name}/verification.md` — same path as spec-derived verification, distinguished only by frontmatter.
+
+## What counts as a feature? (read this before invoking)
+
+A **feature** is a coherent logical concern someone would name in a product meeting — "login," "password reset," "user signup," "checkout." A **surface** is where that feature manifests in code — a route, an endpoint, a file, a CLI command.
+
+The relationship is many-to-many:
+
+- **One feature can touch multiple surfaces.** "User signup" touches `/signup`, `POST /api/users`, `POST /api/auth/login`, and the welcome-email worker.
+- **Multiple features can share a surface.** `POST /api/auth/login` might be touched by "password login," "magic-link login," and "2FA verification" — three features sharing one endpoint.
+
+**Each feature gets one `verification.md`.** Two features that share a surface get two files, both listing that surface in their `Surfaces` section. The debug panel (if installed) renders the union of all specs whose surfaces include the current route.
+
+Heuristics for picking boundaries:
+
+- A feature is something a PM would name. "Login flow" yes; "the third branch of the login handler" no.
+- Coherent behavior — two checkpoints that always pass-or-fail together belong to one feature.
+- One paragraph of `requirements.md` worth of explanation. If you need a multi-level outline, the scope is probably more than one feature.
+- When in doubt, split smaller. Easier to merge two verification.md files later than to disentangle a bundled one.
+
+If you can't decide what the feature boundaries are, use `--discover` (described below) — the agent scans the codebase and proposes boundaries, and you confirm or edit them before any files are written.
+
+## --discover mode
+
+When the user invokes `/cover --discover` (no feature name), the agent scans the codebase and proposes feature boundaries instead of asking the user to enumerate them. **The agent never writes a file without explicit user confirmation.**
+
+If `--discover` is **not** passed, skip this section and proceed to Phase 1 below for the single-feature flow.
+
+### Phase D1 — Scan the codebase
+
+Look for feature-shaped structures. Don't enumerate every file — only top-level structure:
+
+- **Page routes** — Next.js (`app/*/page.tsx`, `pages/*.tsx`), Vite/React (router config), Remix (`app/routes/*`), SvelteKit (`src/routes/*`), Rails (`config/routes.rb`), Django (`urls.py`).
+- **API endpoints** — same frameworks; group separately from page routes. For Express/Fastify, grep for `app.get/post/put/patch/delete`. For FastAPI, grep for `@app.X` decorators.
+- **CLI subcommands** — argument-parser entries (argparse subparsers, click groups, Cobra commands, etc.).
+- **Feature directories** — `src/features/*/`, `app/features/*/`, top-level subdirectories under `lib/`, `internal/`, or `pkg/`.
+- **Components** — `components/*/` and `src/components/*/` if there's no clear feature directory structure.
+
+Cap each category at what you can see in one scan — don't recursively walk every subdirectory. The goal is a feature-shaped map, not a file census.
+
+### Phase D2 — Group surfaces into proposed features
+
+Apply these heuristics in order:
+
+1. **Path-prefix**: endpoints sharing a path prefix (`/api/auth/*`) → one feature named after the prefix (`auth-flow` or `auth-api`).
+2. **Directory-based**: files under `src/features/{name}/` → one feature named `{name}`.
+3. **Naming similarity**: `LoginForm.tsx`, `useAuth.ts`, `AuthGuard.tsx` → cluster as one feature (`auth-flow`).
+4. **Adjacent surfaces**: a page route + the API endpoints it calls + the components it renders → one feature, named after the dominant concern.
+
+Anything that doesn't fit a single feature goes into an **unclaimed bucket** — utility files, shared components, anything you couldn't classify with confidence. **Don't force unclaimed surfaces into features they don't obviously belong to.** Leaving them unclaimed gives the user the choice.
+
+### Phase D3 — Present the proposal
+
+Print to chat:
+
+```
+═══ /cover --discover ═══
+
+Scanned codebase. Proposed feature breakdown ({N} features, {M} surfaces):
+
+1. {feature-name-1}
+   {surface 1}, {surface 2}, {surface 3}, ...
+
+2. {feature-name-2}
+   ...
+
+...
+
+{N+1}. (unclaimed — don't seem to belong to a single feature)
+   {surface}, {surface}, ...
+   ↳ Skip these, or claim them under a "shared" feature?
+
+Review the proposal:
+  y — accept and run /cover for each
+  e — edit groupings (rename / split / merge / drop / claim unclaimed)
+  n — cancel, nothing written
+
+  [y/e/n]
+```
+
+Wait for the user's response. Do not proceed until they pick one.
+
+### Phase D4 — Edit loop (only if user picks `e`)
+
+Walk through each proposed feature in order. For each, ask:
+
+> Feature {N}: `{feature-name}` ({M} surfaces)
+> {list surfaces}
+>
+> [k]eep / [r]ename / [s]plit / [m]erge with another / [d]rop / [a]bort edit-mode?
+
+- **Keep** — moves to the next feature unchanged.
+- **Rename** — ask for new name. Validate as kebab-case. Move on.
+- **Split** — ask which surfaces belong in the original feature and which move to a new one. Ask for the new feature's name.
+- **Merge** — ask which other proposed feature (by number) to merge with. Combine surfaces, ask for the merged name (default to one of the original names).
+- **Drop** — remove this feature from the plan. Its surfaces go back to the unclaimed bucket.
+- **Abort edit-mode** — exit the edit loop without further changes. Show the current state of the plan and re-ask `[y/n]`.
+
+After walking every feature, also ask about the unclaimed bucket:
+
+> Unclaimed surfaces: {list}
+> [s]kip them / [c]laim under a "shared" feature / [a]ssign to existing features one at a time?
+
+If `c`, the unclaimed bucket becomes one feature named `shared` (or whatever the user prefers). If `a`, walk each unclaimed surface and ask which existing feature it belongs to (or "drop").
+
+After the edit loop completes, **show the final revised plan and ask one final `[y/n]`** before proceeding. This is the last gate before files get written.
+
+### Phase D5 — Batch run
+
+For each confirmed feature in the final plan, invoke the single-feature flow internally. Pass the feature name and surfaces directly to `verification-engineer` in code-derived mode — skip Phase 2 (surface identification) since surfaces are already known from the proposal.
+
+Process features in **sequence, not parallel**. Parallel would interleave the agent's reasoning across multiple verification.md files and produce a worse result.
+
+After each feature, print a one-line progress marker:
+
+```
+[2/6] auth-flow ............ written (4 checkpoints, 1 concern flagged)
+```
+
+If any feature fails to generate (agent can't determine behavior at a surface, or returns an empty result), continue with the rest but record the failure for the final summary. Don't stop the whole batch on a single failure.
+
+### Phase D6 — Final summary
+
+After all features are processed, print a substantial summary:
+
+```
+═══ /cover --discover complete ═══
+
+Coverage written:
+  ✓ auth-flow          (4 checkpoints, 1 concern)
+  ✓ user-dashboard     (6 checkpoints, 0 concerns)
+  ✓ checkout           (8 checkpoints, 3 concerns ← review!)
+  ✓ admin-panel        (3 checkpoints, 0 concerns)
+  ✓ notifications      (2 checkpoints, 1 concern)
+  ⚠ shared             (skipped — unclaimed, user declined to create)
+
+Total: 5 features covered, 23 checkpoints, 5 concerns flagged.
+
+⚠️  All verifications are code-derived (source: code). They document
+    CURRENT behavior, not desired behavior. Concerns are likely bugs
+    in current code — review each and consider /report-bug if real.
+
+To capture initial pass/fail results for any feature:
+    /verify {feature-name}
+
+To upgrade a code-derived verification to a spec-derived contract:
+    1. Write .github/specs/{feature}/requirements.md
+    2. /verify {feature} --bootstrap
+```
+
+The `⚠️` reminder is mandatory. After batch discovery, it's easy for the user to forget that every file is a snapshot, not a contract.
 
 ## Phase 1 — Resolve the target feature
 
