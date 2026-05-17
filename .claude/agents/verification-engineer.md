@@ -1,6 +1,6 @@
 ---
 name: verification-engineer
-description: Translates spec acceptance criteria into runnable verification artifacts (.github/specs/{feature}/verification.md). Writes checkpoint files, runs automated checks, walks user through manual ones, records pass/fail. Use after a spec is implemented and you want to confirm it actually works end to end. Does not write production code or production tests.
+description: Translates acceptance criteria into runnable verification.md artifacts. Two modes — spec-derived (read .github/specs/{feature}/requirements.md, build a contract) or code-derived (read user-supplied existing code surfaces, build a snapshot). Writes checkpoint files, runs automated checks, walks user through manual ones, records pass/fail. Invoked by /verify (spec mode) and /cover (code mode). Does not write production code or production tests.
 tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 

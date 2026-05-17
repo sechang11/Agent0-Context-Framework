@@ -62,6 +62,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/update-framework` | Pull latest additive files (commands, agent shims, manifest) from the public framework repo |
 | `/report-bug` | Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion |
 | `/verify` | Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline |
+| `/cover` | Generate a code-derived `verification.md` for an EXISTING feature with no spec — brownfield on-ramp |
 
 ## Specs
 

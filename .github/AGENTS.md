@@ -52,14 +52,25 @@ Pick **one** primary agent per task. You may use a second for validation (e.g. `
 
 ## Development lifecycle
 
-Follow `.github/workflow/ai-dev-lifecycle.md` if present:
+Two paths depending on whether the feature is greenfield or brownfield. Both converge at the verification step.
+
+**Greenfield — new work, written before code:**
 
 1. **Spec** — `/spec` for non-trivial work.
 2. **Architect review** — `@architect` approves the design before implementation.
 3. **Implementation** — match existing patterns; tests as you go.
 4. **Tests** — `@test-engineer` flags coverage gaps.
 5. **Reviews** — `@security-reviewer` if security-sensitive; `@code-reviewer` otherwise.
-6. **Verification** — `/verify {feature}` bootstraps `verification.md` from the spec via `@verification-engineer`; re-runs it to confirm the feature actually works end to end. Failing checkpoints route through `/report-bug`.
+6. **Verification** — `/verify {feature}` bootstraps `verification.md` from the spec via `@verification-engineer`; re-runs it to confirm the feature works end to end. Failing checkpoints route through `/report-bug`.
+
+**Brownfield — existing code that predates the framework:**
+
+1. **Cover** — `/cover {feature}` with the user-supplied surfaces (routes, endpoints, files, commands). `@verification-engineer` reads the code at those surfaces and writes a code-derived `verification.md` documenting current observable behavior.
+2. **Triage concerns** — the code-derived verification flags anything that looks like a bug as a concern (not as a checkpoint). File each concern through `/report-bug` or accept it as by-design.
+3. **Verify** — `/verify {feature}` runs the code-derived checkpoints to capture a baseline (the regression suite).
+4. **(Optional) Upgrade to spec-derived** — write `requirements.md` retroactively for desired behavior, then `/verify {feature} --bootstrap` flips the verification from snapshot to contract.
+
+The verification.md file is the same in both paths — distinguished only by `source: spec | code` in its frontmatter. Stage 3 (web debug panel) renders both identically.
 
 ## Project-specific reminders
 

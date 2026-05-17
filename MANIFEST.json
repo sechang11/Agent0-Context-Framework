@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-15c",
+  "version": "2026-05-15d",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -18,6 +18,7 @@
     { "path": ".claude/commands/update-framework.md",   "class": "additive" },
     { "path": ".claude/commands/report-bug.md",         "class": "additive" },
     { "path": ".claude/commands/verify.md",             "class": "additive" },
+    { "path": ".claude/commands/cover.md",              "class": "additive" },
 
     { "path": ".github/prompts/adopt-framework.prompt.md",  "class": "additive" },
     { "path": ".github/prompts/spec.prompt.md",             "class": "additive" },
@@ -26,6 +27,7 @@
     { "path": ".github/prompts/update-framework.prompt.md", "class": "additive" },
     { "path": ".github/prompts/report-bug.prompt.md",       "class": "additive" },
     { "path": ".github/prompts/verify.prompt.md",           "class": "additive" },
+    { "path": ".github/prompts/cover.prompt.md",            "class": "additive" },
 
     { "path": ".github/bugs/README.md",                     "class": "additive" },
 
@@ -53,10 +55,21 @@
     { "command": "/report",            "purpose": "Convene every agent for a roundtable progress review; writes `PROGRESS_REPORT.md`" },
     { "command": "/update-framework",  "purpose": "Pull the latest additive files (commands, agent shims, manifest) from the public framework repo" },
     { "command": "/report-bug",        "purpose": "Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion" },
-    { "command": "/verify",            "purpose": "Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline" }
+    { "command": "/verify",            "purpose": "Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline" },
+    { "command": "/cover",             "purpose": "Generate a code-derived `verification.md` for an EXISTING feature with no spec — brownfield on-ramp; documents current observable behavior" }
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-15d",
+      "notes": [
+        "Added /cover — generates a code-derived verification.md for an existing feature that has no spec. The brownfield on-ramp: most real projects adopt Agent0 after they have code, and /spec → /verify only covers greenfield work. /cover takes a feature name and user-supplied surfaces (routes, endpoints, files, commands), reads the code at those surfaces via @verification-engineer, and writes .github/specs/{feature}/verification.md with `source: code` in frontmatter. Each checkpoint uses 'Currently:' prefix language to distinguish snapshot from contract. Suspected bugs go in a separate ## Concerns section, not as checkpoints, so the agent never silently 'fixes' current behavior to describe ideal behavior.",
+        "Updated verification.md schema: new mandatory `source: spec | code` frontmatter field. Spec-derived files document desired behavior (contract). Code-derived files document current observable behavior (snapshot). A code-derived verification can be upgraded later by writing requirements.md retroactively and running /verify {feature} --bootstrap — the source flips to spec.",
+        "Updated verification-engineer role with the two-mode distinction: spec-derived (read .github/specs/) and code-derived (read user-supplied surfaces). Code-derived mode has extra rules: cite source files for every checkpoint, never infer surfaces beyond what the user gave, never silently fix buggy current behavior, flag concerns separately from checkpoints.",
+        "Updated AGENTS.md lifecycle with two paths — greenfield (spec → architect → implementation → tests → reviews → verify) and brownfield (cover → triage concerns → verify → optionally upgrade to spec-derived). Both paths converge on verification.md; Stage 3 (web debug panel) renders both identically.",
+        "Stage 2.5 of the spec-bound debug surface. Stage 3 (web debug panel) is next."
+      ]
+    },
     {
       "version": "2026-05-15c",
       "notes": [
