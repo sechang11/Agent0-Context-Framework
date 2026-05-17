@@ -46,6 +46,7 @@ Claude Code agent shims live in `.claude/agents/`. Each is a thin wrapper that d
 | `security-reviewer` | Security findings, severity-ranked |
 | `test-engineer` | Coverage gaps, untested edge cases |
 | `verification-engineer` | Turns spec acceptance criteria into runnable `verification.md` checkpoints; used by `/verify` |
+| `debug-panel-engineer` | Installs/removes the web-debug panel; reads `.github/skills/web-debug/SKILL.md`; writes panel code into the host stack |
 
 See `.github/AGENTS.md` for routing rules and ambiguous-case examples.
 
@@ -63,6 +64,8 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/report-bug` | Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion |
 | `/verify` | Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline |
 | `/cover` | Generate a code-derived `verification.md` for an EXISTING feature with no spec — brownfield on-ramp |
+| `/install-debug-panel` | Install the Stage 3 web-debug panel at `/__debug` (off by default, gated by env var). Routes via `@architect` and `@debug-panel-engineer` |
+| `/demolish-debug` | Fully remove the web-debug panel from the host project. Two confirmation gates. Verification.md files untouched |
 
 ## Specs
 

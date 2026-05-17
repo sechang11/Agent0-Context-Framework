@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-15d",
+  "version": "2026-05-15e",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -19,17 +19,22 @@
     { "path": ".claude/commands/report-bug.md",         "class": "additive" },
     { "path": ".claude/commands/verify.md",             "class": "additive" },
     { "path": ".claude/commands/cover.md",              "class": "additive" },
+    { "path": ".claude/commands/install-debug-panel.md", "class": "additive" },
+    { "path": ".claude/commands/demolish-debug.md",     "class": "additive" },
 
-    { "path": ".github/prompts/adopt-framework.prompt.md",  "class": "additive" },
-    { "path": ".github/prompts/spec.prompt.md",             "class": "additive" },
-    { "path": ".github/prompts/agents.prompt.md",           "class": "additive" },
-    { "path": ".github/prompts/report.prompt.md",           "class": "additive" },
-    { "path": ".github/prompts/update-framework.prompt.md", "class": "additive" },
-    { "path": ".github/prompts/report-bug.prompt.md",       "class": "additive" },
-    { "path": ".github/prompts/verify.prompt.md",           "class": "additive" },
-    { "path": ".github/prompts/cover.prompt.md",            "class": "additive" },
+    { "path": ".github/prompts/adopt-framework.prompt.md",     "class": "additive" },
+    { "path": ".github/prompts/spec.prompt.md",                "class": "additive" },
+    { "path": ".github/prompts/agents.prompt.md",              "class": "additive" },
+    { "path": ".github/prompts/report.prompt.md",              "class": "additive" },
+    { "path": ".github/prompts/update-framework.prompt.md",    "class": "additive" },
+    { "path": ".github/prompts/report-bug.prompt.md",          "class": "additive" },
+    { "path": ".github/prompts/verify.prompt.md",              "class": "additive" },
+    { "path": ".github/prompts/cover.prompt.md",               "class": "additive" },
+    { "path": ".github/prompts/install-debug-panel.prompt.md", "class": "additive" },
+    { "path": ".github/prompts/demolish-debug.prompt.md",      "class": "additive" },
 
     { "path": ".github/bugs/README.md",                     "class": "additive" },
+    { "path": ".github/skills/web-debug/SKILL.md",          "class": "additive" },
 
     { "path": ".claude/agents/architect.md",                  "class": "additive" },
     { "path": ".claude/agents/software-engineer.md",          "class": "additive" },
@@ -37,6 +42,7 @@
     { "path": ".claude/agents/security-reviewer.md",          "class": "additive" },
     { "path": ".claude/agents/test-engineer.md",              "class": "additive" },
     { "path": ".claude/agents/verification-engineer.md",      "class": "additive" },
+    { "path": ".claude/agents/debug-panel-engineer.md",       "class": "additive" },
     { "path": ".claude/agents/_domain-expert-template.md",    "class": "template" },
 
     { "path": ".github/agents/architect.agent.md",                  "class": "template" },
@@ -45,6 +51,7 @@
     { "path": ".github/agents/security-reviewer.agent.md",          "class": "template" },
     { "path": ".github/agents/test-engineer.agent.md",              "class": "template" },
     { "path": ".github/agents/verification-engineer.agent.md",      "class": "template" },
+    { "path": ".github/agents/debug-panel-engineer.agent.md",       "class": "template" },
     { "path": ".github/agents/_domain-expert-template.agent.md",    "class": "template" }
   ],
 
@@ -56,10 +63,24 @@
     { "command": "/update-framework",  "purpose": "Pull the latest additive files (commands, agent shims, manifest) from the public framework repo" },
     { "command": "/report-bug",        "purpose": "Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion" },
     { "command": "/verify",            "purpose": "Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline" },
-    { "command": "/cover",             "purpose": "Generate a code-derived `verification.md` for an EXISTING feature with no spec — brownfield on-ramp; documents current observable behavior" }
+    { "command": "/cover",             "purpose": "Generate a code-derived `verification.md` for an EXISTING feature with no spec — brownfield on-ramp; documents current observable behavior" },
+    { "command": "/install-debug-panel", "purpose": "Install the Stage 3 web-debug panel at `/__debug` (off by default, env-var gated). Routes via `@architect` (stack-fit check) and `@debug-panel-engineer` (implementation)" },
+    { "command": "/demolish-debug",    "purpose": "Fully remove the web-debug panel from the host project. Two confirmation gates. Verification.md files are untouched" }
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-15e",
+      "notes": [
+        "Stage 3 of the spec-bound debug surface: the web-debug panel. Opt-in module for web projects whose architect approves the stack fit. Mounts at /__debug, gated by an env var (DEBUG_PANEL=1 / NEXT_PUBLIC_DEBUG_PANEL=1 / VITE_DEBUG_PANEL=1 depending on stack). OFF by default — panel route returns 404 when env var is unset; this is the load-bearing safety property and is non-negotiable. Renders verification.md content joined to the current route: per-checkpoint status with re-run buttons for automated ones, feature-flag toggles (localStorage-backed), state probes (user-implemented), and a 'copy bug report to clipboard' button that emits Markdown matching /report-bug's format.",
+        "Added /install-debug-panel — confirms intent + safety posture with user, routes to @architect for stack-fit review (APPROVE/REVISE/REJECT), then routes to @debug-panel-engineer for assessment + implementation in the host project's stack. Generates probe stubs from verification.md ## State to surface declarations. Refuses to generate probes whose names indicate secret-reading.",
+        "Added /demolish-debug — fully removes the panel from the host project. Two confirmation gates (intent + specific deletion plan). Deletes /__debug routes and the debug/ helper directory; surgically removes hotkey mount from root layout and DEBUG_PANEL line from .env.example; REPORTS (does not auto-fix) host-code files that import debug helpers. Verification.md files are deliberately untouched — they're independent of the panel and survive re-install.",
+        "Added @debug-panel-engineer agent (canonical + shim). Stack-specific implementer. Reads .github/skills/web-debug/SKILL.md as its contract. Declines cleanly when the stack isn't a fit (no HTTP routing, no frontend framework, no env-var gating, /__debug already taken). Never adds new dependencies. Never injects code into host components — only reads files, localStorage, and user-implemented probes.",
+        "Added .github/skills/web-debug/SKILL.md — the canonical contract for what the panel must do regardless of stack. Defines required surfaces (/__debug page, /__debug/api/manifest, run-checkpoint, probe endpoints), required client modules (panel, flags, probes, hotkey, gate), how the panel chooses what to render (matches current route against verification.md Surfaces sections), how flags work (localStorage with getDebugFlag helper), how the report-bug button works (clipboard handoff to /report-bug), and the four non-negotiable safety properties: off by default, reversible, no code injection, no secrets in probes.",
+        "Updated AGENTS.md roster and CLAUDE.md tables to include debug-panel-engineer and the two new commands.",
+        "Known limitation in v1: panel reads .github/specs/*/verification.md via runtime filesystem reads. If the host project is built and deployed as a static artifact that doesn't include .github/, the panel's manifest endpoint will return empty. Static-export support (build-time JSON generation) is future work."
+      ]
+    },
     {
       "version": "2026-05-15d",
       "notes": [

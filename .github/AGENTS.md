@@ -35,6 +35,7 @@ If the file you'd want to read doesn't exist, proceed without it. The framework 
 | Security Reviewer | `security-reviewer.agent.md` | Security findings, severity-ranked |
 | Test Engineer | `test-engineer.agent.md` | Coverage gaps, untested edge cases |
 | Verification Engineer | `verification-engineer.agent.md` | Turns spec acceptance criteria into runnable verification.md checkpoints; used by `/verify` |
+| Debug Panel Engineer | `debug-panel-engineer.agent.md` | Installs and removes the web-debug panel (Stage 3); writes panel code into the host stack. Used by `/install-debug-panel` and `/demolish-debug`. Will decline when the stack isn't a fit. |
 
 Pick **one** primary agent per task. You may use a second for validation (e.g. `@security-reviewer` after `@architect`). Don't stack three.
 
