@@ -11,6 +11,11 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-18a
+
+- Updated /cover --discover final summary (Phase D6) to inline each feature's verification.md path with the feature name, using an indented arrow notation (`→ .github/specs/{feature}/verification.md`) on the line below each entry. Previously the path list lived in a separate 'Files written' section at the bottom, requiring users to cross-reference feature names to paths. Now they're co-located so the user can scan the list and jump straight to any file.
+
+
 ## 2026-05-18
 
 - Added @ui-ux-engineer agent (canonical + shim). Reviews user experience across three axes: flow friction (minimum-friction default), adaptive design per viewport tier (collaborates with @architect on strategy), and theme consistency. Engagement-hacking analysis is opt-in via --engagement flag and always lives in a SEPARATE output section so users can take or leave it per site type. Dark patterns (forced continuity, manipulative urgency, confirmshaming, hidden costs) are explicitly out of scope even with --engagement. Operates via the shopper showroom model for theme work — shows options, asks 'this or this,' narrows from responses; never makes users describe styling in design vocabulary.

@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-18",
+  "version": "2026-05-18a",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -91,6 +91,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-18a",
+      "notes": [
+        "Updated /cover --discover final summary (Phase D6) to inline each feature's verification.md path with the feature name, using an indented arrow notation (`→ .github/specs/{feature}/verification.md`) on the line below each entry. Previously the path list lived in a separate 'Files written' section at the bottom, requiring users to cross-reference feature names to paths. Now they're co-located so the user can scan the list and jump straight to any file."
+      ]
+    },
     {
       "version": "2026-05-18",
       "notes": [

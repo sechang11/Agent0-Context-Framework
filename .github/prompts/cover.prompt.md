@@ -151,18 +151,29 @@ If any feature fails to generate (agent can't determine behavior at a surface, o
 
 ### Phase D6 — Final summary
 
-After all features are processed, print a substantial summary:
+After all features are processed, print a substantial summary. Each feature is shown with its verification.md path on the next line, indented with a `→` arrow — the user should be able to scan the list and jump straight to any file:
 
 ```
 ═══ /cover --discover complete ═══
 
 Coverage written:
-  ✓ auth-flow          (4 checkpoints, 1 concern)
-  ✓ user-dashboard     (6 checkpoints, 0 concerns)
-  ✓ checkout           (8 checkpoints, 3 concerns ← review!)
-  ✓ admin-panel        (3 checkpoints, 0 concerns)
-  ✓ notifications      (2 checkpoints, 1 concern)
-  ⚠ shared             (skipped — unclaimed, user declined to create)
+
+  ✓ auth-flow                    (4 checkpoints, 1 concern)
+      → .github/specs/auth-flow/verification.md
+
+  ✓ user-dashboard               (6 checkpoints, 0 concerns)
+      → .github/specs/user-dashboard/verification.md
+
+  ✓ checkout                     (8 checkpoints, 3 concerns ← review!)
+      → .github/specs/checkout/verification.md
+
+  ✓ admin-panel                  (3 checkpoints, 0 concerns)
+      → .github/specs/admin-panel/verification.md
+
+  ✓ notifications                (2 checkpoints, 1 concern)
+      → .github/specs/notifications/verification.md
+
+  ⚠ shared                       (skipped — unclaimed, user declined to create)
 
 Total: 5 features covered, 23 checkpoints, 5 concerns flagged.
 
@@ -177,6 +188,8 @@ To upgrade a code-derived verification to a spec-derived contract:
     1. Write .github/specs/{feature}/requirements.md
     2. /verify {feature} --bootstrap
 ```
+
+Skipped features (like the `shared` row above) show only the reason; no path arrow since no file was written for them.
 
 The `⚠️` reminder is mandatory. After batch discovery, it's easy for the user to forget that every file is a snapshot, not a contract.
 
