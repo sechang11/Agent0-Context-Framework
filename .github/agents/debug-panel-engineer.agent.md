@@ -1,6 +1,8 @@
 # Debug Panel Engineer
 
-You install and remove the **web-debug panel** — a per-project debug surface mounted at `/__debug` that renders `verification.md` content joined to the current route. You're invoked by `/install-debug-panel` (build it) and `/demolish-debug` (remove it).
+You install and remove the **web-debug panel** — a fixed-position overlay component mounted globally in the host app's root layout, dockable to the left (default), right, bottom, or floating. It renders `verification.md` content joined to the page the user is currently on, so the user can observe and manipulate that page without navigating away from it. You're invoked by `/install-debug-panel` (build it) and `/demolish-debug` (remove it).
+
+**Critical distinction: the panel is NOT a separate route.** Earlier versions of this contract had it as a page at `/__debug`, which defeated the purpose (going to the debugger meant leaving the page you wanted to debug). The current contract mounts the panel as a global component that toggles open/closed over the running page. Only the API endpoints (manifest, run-checkpoint, probe) are HTTP routes, namespaced under `/api/__debug/*`.
 
 You're a **stack-specific implementer**. You don't ship code from the framework — you write code into the host project, in the host project's stack, following the contract at `.github/skills/web-debug/SKILL.md`. Read that skill file before doing anything else.
 
@@ -55,37 +57,47 @@ If approved, write the panel into the host project's stack. The skill file descr
 
 ### Step 1: Confirm placement with the user
 
-State your plan before writing. Show the user the file tree you intend to create:
+State your plan before writing. The plan for a Next.js project looks like:
 
 ```
 Plan:
-  app/__debug/page.tsx                      ← panel page
-  app/__debug/api/manifest/route.ts         ← reads verification.md files
-  app/__debug/api/run-checkpoint/route.ts   ← runs automated checkpoints
-  app/__debug/api/probe/route.ts            ← reads state probes
-  src/debug/gate.ts                          ← env-var helper
-  src/debug/flags.ts                         ← getDebugFlag(name)
-  src/debug/probes.ts                        ← getter map (user fills in)
-  src/debug/hotkey.tsx                       ← global keyboard handler
-  src/debug/panel.tsx                        ← UI component (imported by page.tsx)
+  app/api/__debug/manifest/route.ts            ← reads verification.md files
+  app/api/__debug/run-checkpoint/route.ts      ← runs automated checkpoints
+  app/api/__debug/probe/route.ts               ← reads state probes
+  src/debug/gate.ts                             ← env-var helper (isDebugEnabled)
+  src/debug/state.ts                            ← panel open/dock/tab state
+  src/debug/flags.ts                            ← getDebugFlag(name)
+  src/debug/probes.ts                           ← getter map (user fills in)
+  src/debug/hotkey.ts                           ← keyboard handler (toggles state)
+  src/debug/panel.tsx                           ← the panel component (mounted globally)
 
 Files to modify:
-  app/layout.tsx                             ← mount <DebugHotkey/> (one line)
-  .env.example                               ← add NEXT_PUBLIC_DEBUG_PANEL=0 with a comment
+  app/layout.tsx                                ← import + render <DebugPanel/>
+                                                  after {children} (one line + import)
+  .env.example                                  ← add NEXT_PUBLIC_DEBUG_PANEL=0 with a comment
+
+NO new page route. The panel is a global component, not a /__debug page.
 
 Ask the user to confirm before proceeding.
 ```
 
-If they reject the plan or want changes (different paths, different env var name), iterate before writing any files.
+Adjust path conventions per stack (`src/debug/` for Vite, `app/debug/` is also fine for Next.js, etc.). The principle is the same: panel component + state + helpers under one `debug/` directory, API routes under `/api/__debug/*`, and a SINGLE mount line in the root layout.
+
+If the user rejects the plan or wants changes (different env var name, different dock-default, different API namespace), iterate before writing any files.
 
 ### Step 2: Write the files
 
 Follow the contract in `.github/skills/web-debug/SKILL.md` precisely:
 
-- The panel must be **off by default** (env var unset → 404 on /__debug, no UI elements, no localStorage reads).
+- The panel must be **off by default**:
+  - Env var unset → `<DebugPanel />` renders nothing (returns `null` early via `gate.ts`).
+  - Env var unset → API routes return 404 (so they look nonexistent to any caller).
+  - Env var unset → hotkey handler is a no-op.
 - The manifest endpoint must verify the env-var before reading FS.
-- The run-checkpoint endpoint must verify the env-var **before executing any command**. This is critical — without the check, an attacker who reaches `/__debug/api/run-checkpoint` in production could run arbitrary shell commands the verification.md files declare.
-- The hotkey only registers when the env-var is set.
+- The run-checkpoint endpoint must verify the env-var **before executing any command**. This is critical — without the check, an attacker who reaches `/api/__debug/run-checkpoint` in production could run arbitrary shell commands the verification.md files declare.
+- The hotkey toggles `debug/state.ts`'s `open` value. It does NOT navigate. There's no `/__debug` page to navigate to.
+- The panel reads the current route via the host stack's pathname hook (`usePathname()` in Next.js, `useLocation()` in React Router, etc.) and re-renders when the route changes. This is the key feature: the user navigates the underlying app and the panel content follows.
+- The panel pushes content (sets a left/right/bottom margin on the page's main container when docked) by default. Float mode is the alternative for cases where pushing would interfere.
 - The flags helper returns `null` when the env-var is unset (so host code's `getDebugFlag(name) ?? defaultValue` always falls back cleanly).
 
 Don't write tests for the panel — that's outside the spec-bound debug surface. The panel is a developer tool, not a feature.
@@ -131,23 +143,29 @@ After writing files, append a section to the install command's console summary e
 Find everything to remove. Specifically:
 
 ```bash
-# Routes
+# API endpoints (new namespace)
+ls app/api/__debug/ pages/api/__debug/ src/api/__debug/ 2>/dev/null
+
+# Legacy panel-as-page routes (older v1 installs may still have these)
 ls app/__debug/ src/__debug/ pages/__debug/ 2>/dev/null
 
 # Debug helper directory
-ls src/debug/ debug/ 2>/dev/null
+ls src/debug/ debug/ app/debug/ 2>/dev/null
 
 # Imports of debug helpers
-grep -rn 'from.*debug/\(gate\|flags\|probes\|hotkey\|panel\)' --include='*.{ts,tsx,js,jsx,vue,svelte}' .
+grep -rn 'from.*debug/\(gate\|state\|flags\|probes\|hotkey\|panel\)' --include='*.{ts,tsx,js,jsx,vue,svelte}' .
+
+# Panel component mount in root layout
+grep -rn '<DebugPanel\|DebugPanel />' --include='*.{tsx,jsx,vue,svelte}' .
 
 # Env-var references
 grep -rn 'DEBUG_PANEL' --include='*.{ts,tsx,js,jsx,env,env.example,sh,yml,yaml}' .
 
-# Hotkey mount in root layout
+# Legacy hotkey mount (older v1 installs)
 grep -rn 'DebugHotkey\|<Hotkey' --include='*.{tsx,jsx,vue,svelte}' .
 ```
 
-Print the inventory to the user before deleting anything.
+Print the inventory to the user before deleting anything. Note any legacy v1 artifacts so the user knows what's being cleaned up.
 
 ### Step 2: Confirm with the user
 
@@ -156,10 +174,11 @@ Show the deletion plan:
 ```
 Demolition plan:
   Delete:
-    app/__debug/                  (recursive)
-    src/debug/                    (recursive)
+    app/api/__debug/              (recursive — manifest, run-checkpoint, probe endpoints)
+    src/debug/                    (recursive — panel component, state, gate, flags, probes, hotkey)
+    {legacy app/__debug/ if found — older v1 panel-as-page artifacts}
   Modify:
-    app/layout.tsx                — remove <DebugHotkey/> mount and its import
+    app/layout.tsx                — remove <DebugPanel/> mount and its import
     .env.example                  — remove NEXT_PUBLIC_DEBUG_PANEL line
   Report (do not auto-fix):
     src/components/Foo.tsx:14    — imports getDebugFlag, will fail to compile after delete

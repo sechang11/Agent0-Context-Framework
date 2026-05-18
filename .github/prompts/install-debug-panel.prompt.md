@@ -5,7 +5,9 @@ description: Install the web-debug panel into the host project. Routes via @arch
 
 # /install-debug-panel
 
-Install the **web-debug panel** into the host project. The panel mounts at `/__debug`, gated by an env var (`DEBUG_PANEL=1` or stack-equivalent), surfaces every `verification.md` whose surfaces include the current route, and provides per-checkpoint status, feature-flag toggles, state probes, and a "copy bug report to clipboard" button.
+Install the **web-debug panel** into the host project. The panel is a fixed-position overlay component mounted globally in the app's root layout — dockable to the left (default), right, bottom, or floating. It does NOT live at a separate `/__debug` route; that defeats the purpose (you'd lose the page you're trying to debug). Instead, it overlays the page the user is currently on and reads the current route via the host stack's pathname hook to surface the right `verification.md` content.
+
+The panel is gated by an env var (`DEBUG_PANEL=1` or stack-equivalent — `NEXT_PUBLIC_DEBUG_PANEL` for Next.js client code, `VITE_DEBUG_PANEL` for Vite, etc.). When the gate is off, the panel renders nothing and the API endpoints return 404. When on, the panel toggles open/closed via a hotkey (`Ctrl+Shift+D` / `Cmd+Shift+D`) and provides per-checkpoint status, feature-flag toggles, state probes, and a "copy bug report to clipboard" button.
 
 This is Stage 3 of the spec-bound debug surface. It depends on Stages 1, 2, and 2.5:
 
@@ -23,7 +25,7 @@ If the host project has no `verification.md` files at all, the panel will instal
 
 2. Confirm the user understands the safety posture:
 
-   > The panel installs OFF by default. It only activates when `DEBUG_PANEL=1` is set in the environment (or stack-equivalent — Next.js uses `NEXT_PUBLIC_DEBUG_PANEL`, Vite uses `VITE_DEBUG_PANEL`). Production deployments leave the env var unset; the panel route returns 404 and renders nothing. To run the panel in your single-environment setup, you'll set the env var manually.
+   > The panel installs OFF by default. It only activates when `DEBUG_PANEL=1` is set in the environment (or stack-equivalent — Next.js uses `NEXT_PUBLIC_DEBUG_PANEL`, Vite uses `VITE_DEBUG_PANEL`). When unset, the panel renders nothing globally and the API endpoints return 404. To run the panel in your single-environment setup, you'll set the env var manually.
    >
    > Continue? [y/N]
 
@@ -33,13 +35,16 @@ If the host project has no `verification.md` files at all, the panel will instal
 
 Route to `@architect` via the Task tool with this brief:
 
-> Review whether this project's stack is a fit for installing the web-debug panel. Read `.github/skills/web-debug/SKILL.md` for the contract. Check:
+> Review whether this project's stack is a fit for installing the web-debug panel. Read `.github/skills/web-debug/SKILL.md` for the contract. The panel is a global overlay COMPONENT (mounted in root layout), NOT a separate route — only the API endpoints under `/api/__debug/*` are HTTP routes.
 >
-> 1. Is this a web app with an HTTP routing layer? (Decline if a pure library, CLI, or non-web artifact.)
-> 2. Does it have a frontend framework (React, Vue, Svelte, etc.) that can render the panel UI?
-> 3. Does the stack support env-var gating for routes? (Next.js: yes. Vite SPA: yes. Pure static site: no.)
-> 4. Is there a conflict at `/__debug` already?
-> 5. Are there architectural constraints (e.g., "no client-side localStorage") that would prevent the panel from working?
+> Check:
+>
+> 1. Is this a web app with an HTTP routing layer? (Decline if a pure library, CLI, or non-web artifact — the API endpoints need somewhere to live.)
+> 2. Does it have a frontend framework (React, Vue, Svelte, etc.) that can mount a global component into the root layout?
+> 3. Does the stack support env-var gating for both client-side code and API routes?
+> 4. Is there a conflict at the `/api/__debug/*` namespace?
+> 5. Is there a root layout where `<DebugPanel />` can be mounted globally?
+> 6. Are there architectural constraints (e.g., "no client-side localStorage") that would prevent the panel from working?
 >
 > Return a structured decision: APPROVE, REVISE, or REJECT. Per your role file's output format. If REJECT, explain which check failed.
 
@@ -77,17 +82,28 @@ When the subagent returns:
    ```
    Plan:
      Files to create:
-       • {file 1}
-       • {file 2}
-       ...
+       • app/api/__debug/manifest/route.ts        ← reads verification.md files
+       • app/api/__debug/run-checkpoint/route.ts  ← runs automated checkpoints
+       • app/api/__debug/probe/route.ts            ← reads state probes
+       • src/debug/gate.ts                          ← env-var helper
+       • src/debug/state.ts                         ← panel open/dock/tab state
+       • src/debug/flags.ts                         ← getDebugFlag(name)
+       • src/debug/probes.ts                        ← probe getters (user fills in)
+       • src/debug/hotkey.ts                        ← toggle handler
+       • src/debug/panel.tsx                        ← the panel component
      Files to modify:
-       • {file 1} — {one-line change}
-     Env-var: {var name} (default: 0)
-     Mount path: {/__debug or alt}
+       • app/layout.tsx                              ← import + render <DebugPanel/>
+                                                       after {children}
+       • .env.example                                ← add NEXT_PUBLIC_DEBUG_PANEL=0
+     Env-var:   NEXT_PUBLIC_DEBUG_PANEL (default: 0)
+     API ns:    /api/__debug/*
+     Mount:     global <DebugPanel/> in root layout (NOT a separate route)
+     Default dock position: left
      Probe stubs to scaffold:
-       • {name} (from .github/specs/{feature}/verification.md)
+       • current-user-id     (from .github/specs/auth-flow/verification.md)
+       • last-api-call       (from .github/specs/auth-flow/verification.md)
      Probes refused (safer alternatives proposed):
-       • {original-name} → {safer-name}
+       • auth-token → auth-token-expiry-seconds
    ```
 
 3. Ask the user to confirm (`y / n / edit`). Edit lets them change the env-var name, mount path, or skip specific files.
@@ -114,9 +130,11 @@ After the agent returns, print this to chat:
 ═══ Debug panel installed — {YYYY-MM-DD HH:MM} ═══
 
   Stack:        {detected stack, e.g. "Next.js 14 (app router) + TypeScript"}
-  Mount path:   /__debug
+  Mount:        global <DebugPanel/> in {root layout file} (NOT a separate route)
+  API namespace: /api/__debug/*
   Env-var:      {var name, e.g. NEXT_PUBLIC_DEBUG_PANEL}
-  Hotkey:       Ctrl+Shift+D  (Cmd+Shift+D on macOS)
+  Hotkey:       Ctrl+Shift+D  (Cmd+Shift+D on macOS) — toggles open/closed
+  Default dock: left (page content shifts right when open)
 
 Files created:
   • {file 1}
@@ -135,11 +153,14 @@ Probe stubs to fill in:
 To activate the panel:
   1. Set the env var:  export {var name}=1   (or add to .env.local)
   2. Restart your dev server.
-  3. Visit /__debug  — or press the hotkey from any page.
+  3. From ANY page in your app, press the hotkey (Ctrl+Shift+D).
+     The panel slides in from the left and shows verification content for
+     the current route. Navigate the underlying app — panel content follows.
 
 Safety posture:
-  • Panel is OFF when {var name} is unset. Production deployments without
-    the env var get a 404 on /__debug and no panel UI elsewhere.
+  • Panel renders nothing when {var name} is unset.
+  • API endpoints under /api/__debug/* return 404 when {var name} is unset
+    (so they look nonexistent to any caller).
   • The panel reads .github/specs/*/verification.md via the filesystem at
     runtime. If you deploy without .github/, the manifest endpoint will
     return empty. (Static-export support is future work.)

@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-18b",
+  "version": "2026-05-18c",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -91,6 +91,18 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-18c",
+      "notes": [
+        "Web-debug panel is now a global overlay COMPONENT, not a separate page route. The previous design (panel at GET /__debug) defeated its own purpose — navigating to a debug page meant leaving the page you wanted to debug, losing state and re-render context. The new model mounts <DebugPanel/> globally in the host app's root layout. It toggles open/closed via the hotkey (Ctrl+Shift+D / Cmd+Shift+D) and renders as a fixed-position sidebar over (or alongside) the running page.",
+        "Default dock position: left, full height, ~360px wide. Page content's left margin is increased when the panel opens, so the page is fully visible next to the panel and re-renders responsively as the user interacts with checkpoints, flags, and probes. Alternative dock positions: right, bottom, float (detached, doesn't push content — useful for testing pure viewport width).",
+        "Panel content is route-aware via the host stack's pathname hook (`usePathname()` in Next.js, `useLocation()` in React Router, etc.). When the user navigates the underlying app, the panel re-renders with content for the new route — same panel, different specs.",
+        "API namespace moved from /__debug/api/* to /api/__debug/* — the panel is no longer at a route, so the API endpoints stand alone under the project's standard /api/ prefix with the __debug subnamespace for clear gating and easy demolition.",
+        "Added debug/state.{ts,js} as a new required client module — manages panel open/dock/tab state, persisted to localStorage so the panel remembers its position across reloads. Hotkey now toggles this state instead of navigating.",
+        "Updated SKILL.md, debug-panel-engineer role, /install-debug-panel plan structure, and /demolish-debug inventory to reflect the new model. Demolish also looks for legacy v1 panel-as-page artifacts (app/__debug/, etc.) so projects that installed under v1 can clean up cleanly.",
+        "Stack-specific notes updated: Next.js mounts in app/layout.tsx after {children}; Vite/React in App.tsx at the top level; Rails/Django/Phoenix inject the panel via a layout-template conditional. Same model everywhere — global mount, not a route."
+      ]
+    },
     {
       "version": "2026-05-18b",
       "notes": [

@@ -14,10 +14,12 @@ This is the off-ramp for Stage 3. It exists so that a user who's done with the p
 ## Phase 1 — Pre-demolition checks
 
 1. Confirm the panel is actually installed. Look for at least one of:
-   - `app/__debug/` or `src/__debug/` or `pages/__debug/`
-   - `src/debug/` or `debug/`
+   - `app/api/__debug/` or `pages/api/__debug/` or `src/api/__debug/` (the API endpoints)
+   - `src/debug/`, `debug/`, or `app/debug/` (the helper directory)
+   - **Legacy v1 artifacts** (panel-as-page) — `app/__debug/`, `src/__debug/`, `pages/__debug/`
+   - `<DebugPanel` imports/usages in source
    - `DEBUG_PANEL` references in `.env.example` or env files
-   - `DebugHotkey` or `getDebugFlag` imports in source
+   - `getDebugFlag` / `isDebugEnabled` imports in source
 
    If **none** are found, the panel isn't installed. Tell the user and exit.
 
@@ -46,12 +48,13 @@ Show the user the agent's plan in this format:
 Demolition plan:
 
   DELETE (recursive):
-    • app/__debug/
-    • src/debug/
+    • app/api/__debug/         (API endpoints: manifest, run-checkpoint, probe)
+    • src/debug/                (panel component, state, gate, flags, probes, hotkey)
+    • {legacy app/__debug/ if found — older v1 panel-as-page artifacts}
 
   MODIFY:
-    • app/layout.tsx      — remove <DebugHotkey/> mount and its import
-    • .env.example        — remove NEXT_PUBLIC_DEBUG_PANEL=0 line
+    • app/layout.tsx           — remove <DebugPanel/> mount and its import
+    • .env.example             — remove NEXT_PUBLIC_DEBUG_PANEL=0 line
 
   REPORT (you must clean up manually):
     • src/components/Header.tsx:14   — imports getDebugFlag, will fail to compile after delete
@@ -72,9 +75,10 @@ Route back to `@debug-panel-engineer` with:
 > 2. Make the surgical modifications to layout files and `.env.example`.
 > 3. Do **not** modify the host-code files in the REPORT list — those are the user's job.
 > 4. Run a final verification grep to confirm:
->    - No `app/__debug/` or `src/__debug/` or `pages/__debug/` directories remain.
->    - No `src/debug/` or `debug/` helper directory remains.
->    - The root layout no longer imports debug helpers.
+>    - No `app/api/__debug/` or `pages/api/__debug/` API endpoints remain.
+>    - No `src/debug/`, `debug/`, or `app/debug/` helper directory remains.
+>    - No legacy `app/__debug/`, `src/__debug/`, or `pages/__debug/` route directories remain.
+>    - The root layout no longer imports or renders `<DebugPanel/>`.
 >    - `.env.example` no longer references `DEBUG_PANEL`.
 > 5. Return: confirmation of completion + the count of host-code references the user still needs to address.
 
