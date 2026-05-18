@@ -43,6 +43,7 @@ Agents are AI personas with written roles. Each one is a specialist. You invoke 
 | `@test-engineer` | Coverage gaps. Untested edge cases. Will write tests to fill gaps if asked. |
 | `@verification-engineer` | Translating spec acceptance criteria into runnable checkpoints. Invoked by `/verify` and `/cover`. Doesn't write production code. |
 | `@debug-panel-engineer` | Installing or removing the web-debug panel (Stage 3). Stack-specific implementer. Invoked by `/install-debug-panel` and `/demolish-debug`. |
+| `@ui-ux-engineer` | Reviews user experience — flow friction, adaptive design per viewport, theme consistency. Manages themes via shopper-showroom interaction. Default minimum-friction; opt-in engagement analysis. Invoked by `/theme` and `/ui-review`. |
 
 ### Routing — which agent to call
 
@@ -132,6 +133,50 @@ Convenes every agent on the roster, has each analyze the project from their spec
 
 Re-running overwrites the previous report with a fresh timestamp.
 
+### "I want to pick a visual style"
+
+```
+/theme                                     # show adopted theme + list available
+/theme browse                              # catalog with descriptions
+/theme apply clean-modern                  # adopt a theme as project default
+/theme save my-brand                       # save current state as a new theme
+/theme mix clean-modern warm-editorial     # blend two themes into a new one
+/theme import editorial-v2 --from-repo {url}  # import from your private themes repo
+```
+
+Themes are managed by `@ui-ux-engineer` using the **shopper showroom** model — you don't need to know design vocabulary. The agent shows options, asks "this or this," and narrows from your responses. Each theme is a `THEME.md` file with design tokens (colors, typography, spacing, radii, shadows) + philosophy + component examples.
+
+Visual depth flags (combine with any action):
+
+- `--text` *(default)* — descriptions only.
+- `--swatch` — visual color and typography blocks rendered inline.
+- `--mockup1` — single component rendered in your stack.
+- `--mockup2` — small page rendered in your stack.
+- `--mockupfull` — full page screenshot via Playwright (requires Playwright installed).
+
+Themes live per-project in `.github/themes/`. For cross-project sharing of your personal themes, maintain a separate private repo and reference it via `/theme import --from-repo {url}` — your private themes don't leak into other adopters' projects.
+
+The framework ships three starter themes (`clean-modern`, `warm-editorial`, `bold-tech`) as examples of the contract, not as opinions about what your project should look like.
+
+### "I want to review the user experience of a feature"
+
+```
+/ui-review {feature}                          # full review across three axes
+/ui-review {feature} --engagement             # add engagement-hacking analysis (separate section)
+/ui-review {feature} --viewport mobile        # focus on one tier
+/ui-review {feature} --axis flow              # drill into one axis: flow|adaptive|theme
+```
+
+Three axes are reviewed by default:
+
+- **Flow friction** — how many steps to complete the goal; which could be eliminated by defaults, deferral, or inference.
+- **Adaptive design** — how the feature presents at `mobile` (< 640), `tablet` (640–1023), `desktop` (1024–1919), `wide` (≥ 1920).
+- **Theme consistency** — does the feature follow the adopted theme's tokens, or break from them?
+
+The first `/ui-review` on a project also establishes `.github/specs/_design/responsive-strategy.md` — the project's adopted multi-resolution approach (adaptive components / conditional rendering / multiple builds / progressive enhancement). The `@ui-ux-engineer` and `@architect` jointly decide.
+
+**Engagement analysis is opt-in.** Without `--engagement`, the review focuses on minimum-friction only (universally good). With `--engagement`, the agent also evaluates engagement-hacking opportunities in a SEPARATE `## Engagement opportunities` section — clearly labeled so you can take or leave them per site. Dark patterns (forced continuity, manipulative urgency, confirmshaming) are out of scope even with `--engagement`.
+
 ### "I want a runtime debug surface" (web apps only)
 
 ```
@@ -217,6 +262,33 @@ Two ways verification.md gets created:
 
 Bug reports are kept indefinitely — the bug history is the project's institutional memory. Archive old ones to `archive/` manually if the directory grows large.
 
+### Themes
+
+A theme is a `THEME.md` file at `.github/themes/{name}/THEME.md`. It captures three things:
+
+- **Philosophy** — 2–3 sentences in plain language describing the feeling and intent.
+- **Design tokens** — machine-readable JSON: colors, typography, spacing, radii, shadows, motion timing. The implementation references these.
+- **Component examples** — code blocks showing how core components (button, card, input) look under this theme.
+
+Themes are picked through a **shopper showroom** interaction with `@ui-ux-engineer` via `/theme`. The agent shows options, asks "this or this," and narrows. You don't need to describe what you want in design vocabulary — that's the point.
+
+**One adopted theme per project at a time.** Recorded in `.github/themes/.adopted`. Specific components can break from the theme intentionally, but the default is consistency.
+
+**Cross-project sharing** is via a separate private repo, not the framework. Your personal themes don't leak into other adopters' projects; their themes don't appear in yours.
+
+### Responsive vs adaptive design
+
+Most "responsive" sites compromise their high-resolution experience to accommodate mobile. The framework offers four approaches, formalized in `.github/skills/responsive-design/SKILL.md`:
+
+1. **Adaptive components** (container queries + per-component variants) — most modern projects.
+2. **Conditional rendering** (different components per viewport) — when layout differs substantially per tier.
+3. **Multiple builds** (separate codebases per viewport) — rare, only at significant scale.
+4. **Progressive enhancement** (mobile baseline + extras at larger viewports) — simplest, fits content sites.
+
+The project picks ONE approach via the first `/ui-review` invocation (or by writing `.github/specs/_design/responsive-strategy.md` directly). `@architect` and `@ui-ux-engineer` jointly approve. Subsequent UI work references the strategy.
+
+Viewport tiers are named consistently: `mobile` (< 640), `tablet` (640–1023), `desktop` (1024–1919), `wide` (≥ 1920). Adjust the boundaries per project if needed; don't rename the tiers.
+
 ### The debug surface (Stages 1–3)
 
 A connected pipeline for catching, verifying, and reporting feature behavior:
@@ -279,6 +351,37 @@ Heuristics:
 - **When in doubt, split smaller.** Easier to merge two verification.md files later than to disentangle a bundled one.
 
 If you can't decide, run `/cover --discover` — the agent scans your codebase and proposes feature boundaries, and you confirm or edit them before any files are written.
+
+### How does theme selection actually work — I'm not a designer?
+
+That's the whole point of the **shopper showroom** model. You don't need to describe what you want — you just look at options and react.
+
+A typical session:
+
+```
+You:    /theme browse --swatch
+Agent:  [shows 3 themes with color/typography swatches inline]
+You:    I like the second one's colors but the third one's typography
+Agent:  Let me show you a mix...
+        [generates a candidate]
+        Stay here, or do you want it warmer? cooler?
+You:    Warmer.
+Agent:  [adjusts colors, shows again]
+You:    Yes, save it.
+Agent:  Saved as `my-theme` at .github/themes/my-theme/THEME.md.
+        Apply it? (y/n)
+You:    y
+```
+
+You're a shopper looking at a catalog. The agent's a clerk asking which you prefer. You don't need to know what "muted desaturated terracotta" means — you just need to recognize whether you like the look.
+
+### What's the difference between minimum-friction and engagement-hacking?
+
+**Minimum-friction** = reducing the steps, fields, and decisions required of the user. Universally good. Smart defaults, progressive disclosure, optimistic UI. Every site benefits.
+
+**Engagement-hacking** = mechanics that increase how often or how long users come back: streaks, variable rewards, hooks, FOMO triggers. Appropriate for some sites (games, consumer apps where engagement is the product); inappropriate for others (banking, healthcare, productivity tools — engagement-hacking those is exploitative).
+
+`/ui-review` defaults to minimum-friction only. Engagement analysis is opt-in via `--engagement`, and findings live in a separate section so you can take or leave them per site. Dark patterns (forced continuity, manipulative urgency, confirmshaming) are out of scope even with `--engagement`.
 
 ### What's the difference between `@verification-engineer` and `@test-engineer`?
 

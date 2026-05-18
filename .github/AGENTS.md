@@ -36,6 +36,7 @@ If the file you'd want to read doesn't exist, proceed without it. The framework 
 | Test Engineer | `test-engineer.agent.md` | Coverage gaps, untested edge cases |
 | Verification Engineer | `verification-engineer.agent.md` | Turns spec acceptance criteria into runnable verification.md checkpoints; used by `/verify` |
 | Debug Panel Engineer | `debug-panel-engineer.agent.md` | Installs and removes the web-debug panel (Stage 3); writes panel code into the host stack. Used by `/install-debug-panel` and `/demolish-debug`. Will decline when the stack isn't a fit. |
+| UI/UX Engineer | `ui-ux-engineer.agent.md` | Reviews and improves user experience — flow simplification (minimum-friction default; opt-in engagement analysis in a separate section), adaptive multi-resolution design (jointly with `@architect`), theme management via the showroom-model interaction. Operates on `.github/themes/` and `.github/specs/{feature}/ui.md`. Used by `/theme` and `/ui-review`. |
 
 Pick **one** primary agent per task. You may use a second for validation (e.g. `@security-reviewer` after `@architect`). Don't stack three.
 
@@ -63,6 +64,7 @@ Two paths depending on whether the feature is greenfield or brownfield. Both con
 4. **Tests** — `@test-engineer` flags coverage gaps.
 5. **Reviews** — `@security-reviewer` if security-sensitive; `@code-reviewer` otherwise.
 6. **Verification** — `/verify {feature}` bootstraps `verification.md` from the spec via `@verification-engineer`; re-runs it to confirm the feature works end to end. Failing checkpoints route through `/report-bug`.
+7. **UI/UX review** *(if the feature has a UI surface)* — `/ui-review {feature}` invokes `@ui-ux-engineer` to evaluate flow friction, adaptive design per viewport tier, and theme consistency. First invocation on a project also establishes `.github/specs/_design/responsive-strategy.md` jointly with `@architect`.
 
 **Brownfield — existing code that predates the framework:**
 

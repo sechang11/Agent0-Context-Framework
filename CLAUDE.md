@@ -47,6 +47,7 @@ Claude Code agent shims live in `.claude/agents/`. Each is a thin wrapper that d
 | `test-engineer` | Coverage gaps, untested edge cases |
 | `verification-engineer` | Turns spec acceptance criteria into runnable `verification.md` checkpoints; used by `/verify` |
 | `debug-panel-engineer` | Installs/removes the web-debug panel; reads `.github/skills/web-debug/SKILL.md`; writes panel code into the host stack |
+| `ui-ux-engineer` | Reviews UX (flow / adaptive / theme). Minimum-friction by default; opt-in engagement analysis. Manages themes via the showroom model. Used by `/theme` and `/ui-review` |
 
 See `.github/AGENTS.md` for routing rules and ambiguous-case examples.
 
@@ -68,6 +69,8 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/demolish-debug` | Fully remove the web-debug panel from the host project. Two confirmation gates. Verification.md files untouched |
 | `/version` | Report installed framework version, latest available upstream, the gap, available commands, and recent changelog entries. Read-only. Works offline |
 | `/help` | Friendly newbie-oriented overview — agents, commands, concepts, workflows. Surfaces `docs/getting-started.md` in chat. Optional topic flag (`agents`, `commands`, `concepts`, `workflow`, `debugging`, `updating`, `faq`). Read-only |
+| `/theme` | Browse, pick, save, apply, mix, or import design themes via the shopper showroom interaction. Operates on `.github/themes/`. Visual depth flags `--text` (default), `--swatch`, `--mockup1/2/full` |
+| `/ui-review` | Invoke `@ui-ux-engineer` to review a feature's UX — flow, adaptive design per viewport tier, theme consistency. Optional `--engagement` flag adds engagement-hacking analysis in a separate section |
 
 ## Specs
 

@@ -11,6 +11,23 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-18
+
+- Added @ui-ux-engineer agent (canonical + shim). Reviews user experience across three axes: flow friction (minimum-friction default), adaptive design per viewport tier (collaborates with @architect on strategy), and theme consistency. Engagement-hacking analysis is opt-in via --engagement flag and always lives in a SEPARATE output section so users can take or leave it per site type. Dark patterns (forced continuity, manipulative urgency, confirmshaming, hidden costs) are explicitly out of scope even with --engagement. Operates via the shopper showroom model for theme work — shows options, asks 'this or this,' narrows from responses; never makes users describe styling in design vocabulary.
+
+- Added /theme command — browse, apply, save, import (--from-repo), or mix design themes. Themes live at .github/themes/{name}/THEME.md as design tokens (JSON: colors, typography, spacing, radii, shadows, motion) + philosophy + component examples. Visual depth flags: --text (default), --swatch (inline color/typography blocks), --mockup1 (single component), --mockup2 (small page), --mockupfull (Playwright screenshot — degrades gracefully if Playwright not installed).
+
+- Added /ui-review command — three-axis feature audit. Default minimum-friction. Opt-in --engagement adds findings in a separate section. Optional --viewport tier focus, --axis drill-down (flow|adaptive|theme). First invocation on a project also establishes .github/specs/_design/responsive-strategy.md jointly with @architect.
+
+- Added .github/skills/responsive-design/SKILL.md — the canonical contract for adaptive design. Defines four approaches (adaptive components, conditional rendering, multiple builds, progressive enhancement) with explicit tradeoffs and a decision matrix. Establishes viewport-tier vocabulary: mobile (< 640), tablet (640–1023), desktop (1024–1919), wide (≥ 1920). The user's high-resolution experience never has to compromise for mobile by default — projects pick the approach that fits their needs.
+
+- Added .github/themes/ directory with README, template, and three starter themes (clean-modern, warm-editorial, bold-tech) demonstrating the contract. Starter themes are examples of the format, not opinions about what projects should look like. Per-project themes are user-owned; cross-project sharing happens via the user's own private themes repo (referenced by /theme import --from-repo {url}), never via the framework manifest. The framework itself stays brand-neutral.
+
+- Updated AGENTS.md roster with @ui-ux-engineer; updated greenfield lifecycle with step 7 (UI/UX review). Updated CLAUDE.md tables. Updated docs/getting-started.md with the new agent, two new commands, themes and responsive-design concepts, and FAQ entries on shopper-showroom theme selection and minimum-friction vs engagement-hacking distinction.
+
+- /help inherits all changes automatically — it reads from docs/getting-started.md, so /help agents, /help commands, /help concepts, /help faq all surface the new content without a separate prompt edit.
+
+
 ## 2026-05-15h
 
 - Added /cover --discover mode. Scans the codebase, groups surfaces into proposed features (using path-prefix, directory, naming-similarity, and adjacent-surface heuristics), and presents a structured proposal to the user. The user accepts (y), edits (e — walks each feature with rename/split/merge/drop/claim-unclaimed options), or cancels (n) before ANY file is written. After confirmation, batch-runs /cover for each feature in sequence with a one-line progress marker. Final summary lists checkpoints + concerns per feature and reminds the user that all output is code-derived (snapshots, not contracts).
