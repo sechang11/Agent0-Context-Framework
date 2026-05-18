@@ -52,7 +52,7 @@ spec: {feature-name}
 source: spec | code
 generated: {YYYY-MM-DD HH:MM}
 last_verified: never | {YYYY-MM-DD HH:MM}
-status: draft | ready | passing | failing | partial
+status: draft | ready | passing | failing | partial | pending
 ---
 
 # Verification: {feature-name}
@@ -95,7 +95,23 @@ A numbered list of acceptance criteria, each translated into a checkable observa
 - **Pass criteria:** {what counts as success — observable behavior, not internal state}
 - **Fail criteria:** {what counts as failure}
 - **Automation:** `{single command}` (if Type is automated or mixed; otherwise `—`)
-- **Last result:** not yet run | pass | fail ({timestamp})
+- **Last result:** not yet run | pass | fail | skip | pending: {reason} ({timestamp})
+
+Result-state semantics:
+
+- **`pass`** — checkpoint executed and met the pass criteria.
+- **`fail`** — checkpoint executed and met the fail criteria. The feature has a problem.
+- **`skip`** — user manually skipped this run.
+- **`pending: needs walk-through`** — manual or mixed-manual portion not yet executed. Subagents can't walk a user through interactive steps — the orchestrator will handle this in the main session.
+- **`pending: needs <prereq>`** — automated CP couldn't run because a service or tool isn't available. Examples: `pending: needs postgres`, `pending: needs playwright`, `pending: needs docker`. Use this instead of `fail` for environment problems — `fail` means the feature is broken; `pending: needs X` means we couldn't tell.
+- **`pending: review`** — something unexpected happened. Surface to the user for inspection.
+
+Frontmatter `status` rules:
+
+- All `pass` → `passing`
+- ≥1 `fail`, no pendings → `failing`
+- ≥1 pending, no fails → `pending` (distinguishes "don't know yet" from "have problems")
+- Mix of pass + fail + pending/skip → `partial`
 
 ### CP-2: ...
 
@@ -204,10 +220,11 @@ You return the verification.md content. You do **not**:
 - Run the verification yourself unless explicitly asked (that's `/verify`).
 - Commit anything.
 
-When `/verify` asks you to **run** the verification (as opposed to bootstrap it), you execute each automated checkpoint, walk the user through manual ones, and update the `Last result` and `last_verified` fields. You record results inline in the existing file — you do not regenerate the structure from scratch.
+When `/verify` asks you to **run** the verification (as opposed to bootstrap it), you execute each **automated** checkpoint, capture its result, and record it inline. **You never prompt the user.** Manual and mixed-manual portions are recorded as `pending: needs walk-through` — the orchestrator (main session) walks the user through them interactively after you return. Automated checkpoints that can't run because a service or tool is missing are recorded as `pending: needs <prereq>` rather than `fail`. You update the `Last result` and `last_verified` fields inline and never regenerate the file structure from scratch.
 
 ## Rules
 
+- **You never prompt the user directly.** You're a subagent — you run in your own context and can't pause for input. All interactive flow lives in the orchestrator (the main session running `/verify`). When you encounter a manual checkpoint or a prereq-blocked automated checkpoint, record it as `pending: needs walk-through` or `pending: needs <prereq>` and return. The orchestrator handles the walk-through.
 - Don't read `.env` or any secrets file.
 - Don't install new dependencies. Don't modify `package.json`, `go.mod`, `pyproject.toml`, `requirements.txt`, etc. If you need a new test dep, flag it back to the user.
 - Don't write production tests — coverage is `test-engineer`'s domain. You write **verification** artifacts, which are higher-level and acceptance-focused.

@@ -11,6 +11,29 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-18b
+
+- Surfaced and fixed a systemic flaw in several slash-command prompts: they instructed subagents to 'ask the user' inline, but subagents in Claude Code run in their own isolated context and cannot prompt interactively. Real-world test runs caught the contradiction and applied sensible workarounds; this update bakes the right pattern in.
+
+- Added a HARD RULE to .github/AGENTS.md: subagents never prompt the user directly. All interactive flow lives in the orchestrator (the main session running the slash command). Subagents accept structured input, do their work, and return structured output. When a workflow needs user input mid-task, the subagent returns a needs-input signal; the orchestrator asks the user; the orchestrator re-dispatches the subagent with the answers included.
+
+- Rewrote /verify Phase 3b (run mode) as a two-step split: subagent runs the automated portion only, marking manual/mixed CPs as `pending: needs walk-through` and prereq-blocked CPs as `pending: needs <prereq>` (e.g. `pending: needs postgres`); orchestrator then walks the user through the walk-through pendings interactively in the main session.
+
+- Enriched the verification.md `Last result` schema: added `pending: needs walk-through`, `pending: needs <prereq>`, and `pending: review` as first-class result states alongside pass/fail/skip. Distinguishes 'feature is broken' (fail) from 'environment is missing' (pending: needs prereq) — the latter is no longer recorded as a failure.
+
+- Added `pending` as a frontmatter `status` value for verifications that have pendings but no fails — distinguishes 'don't know yet' from 'have problems.'
+
+- Rewrote /install-debug-panel Phase 3 as propose → orchestrator confirms → execute. Subagent proposes file layout + env-var + probe stubs; orchestrator shows plan to user with y/n/edit; subagent re-dispatched with confirmed plan to actually write files. No more subagent-side confirmation prompts.
+
+- Rewrote /theme actions apply/save/mix to move user Q&A into the orchestrator. For apply: subagent proposes plan, orchestrator confirms, subagent executes. For save: orchestrator collects mood/best-for/not-for metadata first, then dispatches subagent. For mix: orchestrator collects all blend choices (color base, headings, body, spacing, motion) up front, dispatches subagent to synthesize, then loops on optional refinements.
+
+- Rewrote /ui-review Phase 4 (responsive-strategy establishment) with the same pattern. Subagent recommends an approach; orchestrator confirms with user; @architect gate-checks; orchestrator writes the strategy file.
+
+- Updated verification-engineer, debug-panel-engineer, and ui-ux-engineer role files with explicit 'you never prompt the user directly' rules referencing the AGENTS.md hard rule.
+
+- Run summary in /verify now categorizes pendings separately from skips, includes 'to unblock: ...' hints for prereq-blocked CPs, and surfaces walk-through pendings with the action that resolved them.
+
+
 ## 2026-05-18a
 
 - Updated /cover --discover final summary (Phase D6) to inline each feature's verification.md path with the feature name, using an indented arrow notation (`→ .github/specs/{feature}/verification.md`) on the line below each entry. Previously the path list lived in a separate 'Files written' section at the bottom, requiring users to cross-reference feature names to paths. Now they're co-located so the user can scan the list and jump straight to any file.

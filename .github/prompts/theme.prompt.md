@@ -49,32 +49,59 @@ Every action invokes `@ui-ux-engineer` via the Task tool with a structured brief
 >
 > Don't propose a choice unless the user asks. This is a catalog browse.
 
-### Action: apply
+### Action: apply (two passes — propose, then execute)
 
-> The user wants to adopt theme `{name}` as the project's default. Verify the theme exists at `.github/themes/{name}/THEME.md`. If it doesn't, suggest the closest match and stop.
+Subagents can't prompt the user. So `apply` runs in two passes: the orchestrator dispatches `@ui-ux-engineer` to propose a plan, shows it to the user, then re-dispatches with `confirmed=true` to execute.
+
+**Pass 1 — Propose:**
+
+> **Propose-only pass.** Do NOT write any files yet.
+>
+> The user wants to adopt theme `{name}`. Verify it exists at `.github/themes/{name}/THEME.md`. If not, return `decision=NOT_FOUND` with the closest matching theme names.
 >
 > If it exists:
 >
 > 1. Read the theme's design tokens.
-> 2. Check the project's stack (Tailwind config? CSS variables file? Theme provider component?).
-> 3. Print a plan showing what files would change (e.g., "would update tailwind.config.js, add :root CSS variables to globals.css, update theme provider").
-> 4. Ask the user to confirm before writing any files.
-> 5. On confirmation, apply: update the relevant stack-specific config + record the adoption in `.github/themes/.adopted` (single-line file containing the theme name).
+> 2. Detect the project's styling stack (Tailwind config? CSS variables file? Theme provider component?).
+> 3. Return a structured plan: `files_to_modify` (list with one-line description of each change), `tokens_summary` (a brief description of what the theme is), and `external_deps_needed` (e.g., font packages the theme references that aren't already installed — list with install commands the user would run).
 
-The agent must NOT install new dependencies. If applying the theme would require adding a font package, the agent prints the install command and asks the user to run it — but doesn't run it themselves.
+**Orchestrator action:** show the plan to the user, prompt `y / n / edit`. If `external_deps_needed` is non-empty, surface those clearly — the user runs the install commands themselves; the framework never installs dependencies.
 
-### Action: save
+**Pass 2 — Execute (only after user confirms):**
 
-> The user wants to capture the project's current visual state as a new theme `{name}`.
+> **Execute the approved plan** for theme `{name}`. The user has confirmed the following: {confirmed plan}.
+>
+> Apply the changes:
+>
+> - Update the stack-specific files per the plan.
+> - Record the adoption at `.github/themes/.adopted` (single-line file containing the theme name).
+>
+> Return: list of files actually written/modified.
+
+### Action: save (orchestrator asks the metadata questions, subagent writes)
+
+Since subagents can't prompt, the orchestrator collects the metadata first, then dispatches the subagent to write the file.
+
+**Orchestrator action:** ask the user three short questions in one batch (use `AskUserQuestion` if available):
+
+1. What's the mood of this theme in 3–5 words?
+2. What's it best for? (one line)
+3. When should someone NOT use it? (one line)
+
+Then dispatch `@ui-ux-engineer`:
+
+> Capture the project's current visual state as a new theme `{name}`. The user-supplied metadata is:
+>
+> - Mood: {user answer}
+> - Best for: {user answer}
+> - Not for: {user answer}
 >
 > 1. Read existing styling sources: `tailwind.config.{js,ts}`, CSS variable definitions, theme provider files, design-token modules.
-> 2. Extract the values (colors, typography, spacing, radii, shadows).
-> 3. Ask the user 2-3 targeted questions to fill in metadata:
->    - "What's the mood of this theme in 3-5 words?"
->    - "What's it best for?"
->    - "When should someone NOT use this?"
-> 4. Generate `.github/themes/{name}/THEME.md` matching the contract in `.github/themes/_template/THEME.md`.
-> 5. Generate sensible component examples by transposing the project's actual button/input/card styling into the template's format.
+> 2. Extract the values (colors, typography, spacing, radii, shadows, motion).
+> 3. Generate `.github/themes/{name}/THEME.md` matching the contract in `.github/themes/_template/THEME.md`. Use the supplied metadata in the frontmatter and philosophy section.
+> 4. Generate sensible component examples by transposing the project's actual button / input / card styling into the template's format.
+>
+> Return: the path of the file written, and a brief summary of the extracted tokens.
 
 ### Action: import
 
@@ -88,19 +115,41 @@ The agent must NOT install new dependencies. If applying the theme would require
 >
 > Do NOT auto-apply the imported theme. Importing makes it available; applying is a separate explicit action.
 
-### Action: mix
+### Action: mix (orchestrator asks the blend questions, subagent writes; refinement loops in the orchestrator)
 
-> The user wants to create a new theme by blending `{theme-a}` and `{theme-b}`.
+Mixing requires several user choices. The orchestrator handles them all; the subagent just synthesizes the resulting theme.
+
+**Orchestrator action — collect blend choices:**
+
+Ask the user, in one batch where possible (use `AskUserQuestion` for the multi-choice questions):
+
+1. **New theme name?** (kebab-case)
+2. **Color base?** A or B (the chosen one's palette dominates; accents come from the other)
+3. **Headings from?** A or B
+4. **Body type from?** A or B
+5. **Spacing & radii scale?** A or B or "average"
+6. **Motion timing?** A or B or "average"
+
+Then dispatch `@ui-ux-engineer`:
+
+> Generate a mixed theme `{new-name}` from `{theme-a}` + `{theme-b}` with the following user-confirmed choices:
 >
-> 1. Read both themes' design tokens.
-> 2. For each token category (colors, typography, spacing, radii, shadows, motion):
->    - **Colors:** ask the user "Pick the base palette: A or B? The accents will come from the other." Then interpolate any tokens you can sensibly average.
->    - **Typography:** ask "Headings from A or B? Body from A or B?" Combine.
->    - **Spacing & radii & motion:** ask "Use A's scale or B's, or average?" Don't auto-pick; this materially affects feel.
->    - **Shadows:** typically follow the color base — copy from whichever base palette was chosen.
-> 3. Generate `.github/themes/{new-name}/THEME.md` with `source: mixed` and `parents: [theme-a, theme-b]`.
-> 4. Synthesize a NEW philosophy paragraph reflecting the blend; don't just paste both.
-> 5. Show the user the result and ask if they want to refine before saving.
+> - Color base: {A | B}
+> - Headings: {A | B}
+> - Body type: {A | B}
+> - Spacing & radii: {A | B | average}
+> - Motion: {A | B | average}
+>
+> 1. Read both source themes' design tokens.
+> 2. Apply the user's choices to build a new token set. For color: use the chosen base's full palette, then swap in the OTHER theme's accent and accent_hover. For typography: use the chosen heading + body fonts; mono can come from either. For "average" scales: take the element-wise mean of corresponding values (rounded to nearest integer for pixel values).
+> 3. Generate `.github/themes/{new-name}/THEME.md` with `source: mixed` and `parents: [{theme-a}, {theme-b}]`.
+> 4. Synthesize a NEW philosophy paragraph reflecting the blend — don't paste both. Be specific about which feel comes from where.
+>
+> Return: path of the file written + a 2-line summary of the resulting blend.
+
+**Orchestrator action — offer refinement:**
+
+After the subagent returns, show the result and ask: "Save as is, or refine?" Refinement options: warmer / cooler / more contrast / less contrast / different accent. If the user picks a refinement, dispatch the subagent again with a tweak instruction. Loop until the user says "save."
 
 ## Phase 3 — Depth-specific rendering
 

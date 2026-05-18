@@ -11,6 +11,7 @@ You are working in <!-- PROJECT: project name and one-line description -->. See 
 - Never commit, push, or open PRs automatically.
 - Reference credentials by environment-variable name only.
 - Specs must produce exactly three files (`requirements.md`, `design.md`, `tasks.md`) under `.github/specs/{feature-name}/`. Never a single combined document.
+- **Subagents never prompt the user directly.** Subagents (anything invoked via the Task tool — `@architect`, `@software-engineer`, `@verification-engineer`, `@ui-ux-engineer`, etc.) run in their own isolated context and have no way to pause and ask a question. All interactive flow lives in the **orchestrator** (the main Claude Code session running the slash command). Subagents accept structured input, do their work, and return structured output. When a workflow needs user input mid-task, the subagent returns a `needs-input` signal in its output; the orchestrator asks the user; the orchestrator re-dispatches the subagent with the answers included. Slash-command prompts that say "ask the user..." inside a subagent brief are bugs — fix them by moving the question to the orchestrator.
 
 ## Context loading
 

@@ -47,21 +47,64 @@ If the architect rejects, stop. Print the architect's reasoning and exit. Don't 
 
 If the architect approves or asks for revisions, proceed with the conditions they specified.
 
-## Phase 3 — Debug-panel-engineer implementation
+## Phase 3 — Debug-panel-engineer: propose plan (no files written)
+
+Subagents can't prompt the user mid-task. So the implementation runs in two passes: first the agent proposes a plan and returns; then the orchestrator (this session) shows the plan to the user; then the agent is re-dispatched with `confirmed=true` to write files.
+
+### Phase 3.1 — Propose
 
 Route to `@debug-panel-engineer` via the Task tool with this brief:
 
-> Install the web-debug panel into this project. The architect has approved with the following conditions: {architect's conditions, if any}.
+> **Propose-only pass.** Do NOT write any files yet.
+>
+> The architect approved installation with the following conditions: {architect's conditions, if any}.
 >
 > Follow your role definition (`.github/agents/debug-panel-engineer.agent.md`) and the contract at `.github/skills/web-debug/SKILL.md`. Specifically:
 >
-> 1. Phase 1 stack assessment — if you have a reason to decline that the architect didn't catch (e.g., no UI framework you can use), decline now rather than building something broken.
-> 2. Phase 2 implementation — propose the file layout to the user, get confirmation, then write the files. Don't add new dependencies.
-> 3. Generate probe stubs for every `## State to surface` declaration in any `verification.md`. Refuse to generate probes whose names indicate secret-reading.
-> 4. Make sure the env-var gate is enforced at every entry point: the route, the API endpoints, the hotkey, the panel UI. Belt-and-suspenders.
-> 5. Update `.env.example` (or stack-equivalent) with the env var set to `0` and a comment explaining what it does.
+> 1. Run Phase 1 (stack assessment) — if you have a reason to decline that the architect didn't catch (e.g., no UI framework you can use), return a `DECLINE` decision with the reason.
+> 2. Run the planning portion of Phase 2 — determine the file layout you'd create, the env-var name you'd use, and any files you'd modify (e.g., root layout for the hotkey mount, `.env.example`). Do not write yet.
+> 3. Identify every `## State to surface` declaration across all `verification.md` files. For each, plan a probe stub. Flag any whose names indicate secret-reading (refuse and propose a safer name).
 >
-> Return: list of files created, list of files modified, the env-var name(s) used, and the path the panel mounts at (`/__debug` unless conflict required a different prefix). Also report any probe stubs the user needs to fill in.
+> Return a structured plan: `decision` (APPROVE | DECLINE), `reason` (if decline), `files_to_create` (list), `files_to_modify` (list), `env_var_name`, `mount_path`, `probes_planned` (list of name + source verification.md), `probes_refused` (list of name + replacement suggestion).
+
+### Phase 3.2 — Orchestrator: show plan, get confirmation
+
+When the subagent returns:
+
+1. If `decision = DECLINE`, print the reason and stop. The architect's approval was insufficient; the engineer caught a deeper issue.
+2. Otherwise, print the plan to the user as a structured preview:
+
+   ```
+   Plan:
+     Files to create:
+       • {file 1}
+       • {file 2}
+       ...
+     Files to modify:
+       • {file 1} — {one-line change}
+     Env-var: {var name} (default: 0)
+     Mount path: {/__debug or alt}
+     Probe stubs to scaffold:
+       • {name} (from .github/specs/{feature}/verification.md)
+     Probes refused (safer alternatives proposed):
+       • {original-name} → {safer-name}
+   ```
+
+3. Ask the user to confirm (`y / n / edit`). Edit lets them change the env-var name, mount path, or skip specific files.
+
+### Phase 3.3 — Debug-panel-engineer: execute
+
+After the user confirms (and applies any edits to the plan), re-dispatch `@debug-panel-engineer` via the Task tool with this brief:
+
+> **Execute the previously-approved plan.** The user has confirmed the following plan: {confirmed plan, including any edits}.
+>
+> Write the files. Make modifications. Enforce env-var gating at every entry point: route, API endpoints, hotkey, panel UI. Belt-and-suspenders.
+>
+> Generate probe stubs for the planned probes. Don't generate the refused ones.
+>
+> Update `.env.example` (or stack-equivalent) with the env var set to `0` and a comment explaining what it does.
+>
+> Return: list of files actually created, list of files actually modified, and any probe stub paths the user needs to fill in.
 
 ## Phase 4 — Console summary
 

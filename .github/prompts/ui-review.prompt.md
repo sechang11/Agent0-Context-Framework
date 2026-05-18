@@ -56,17 +56,43 @@ Route to the agent via the Task tool with this brief:
 >
 > Output the review in the structured format from your role file. Each axis gets its own section. Be specific — cite file paths and line numbers. Don't say "the flow is too long" — say "the signup flow at `/signup` requires 4 steps; 2 could be eliminated by inferring locale from IP and deferring the optional bio field."
 
-## Phase 4 — If no responsive-strategy.md exists yet
+## Phase 4 — If no responsive-strategy.md exists yet (orchestrator-driven)
 
-If this is the project's first UI review and `.github/specs/_design/responsive-strategy.md` doesn't exist, the agent prompts the user to establish one collaboratively:
+If this is the project's first UI review and `.github/specs/_design/responsive-strategy.md` doesn't exist, the **orchestrator** (this session) walks the user through establishing one. Subagents can't prompt the user, so they propose and the orchestrator confirms.
 
-1. Briefly explain the four approaches (reference `.github/skills/responsive-design/SKILL.md`).
-2. Recommend one based on the project's stack and content (e.g., "I'd suggest Approach 1 — adaptive components — given this is a Next.js component-heavy SPA").
-3. Ask the user to confirm or pick a different approach.
-4. Once confirmed, route to `@architect` for a quick gate-check: "We're proposing Approach X for this project. Any architectural reason to decline?"
-5. If approved by architect, write `.github/specs/_design/responsive-strategy.md` documenting the choice.
+### Phase 4.1 — Subagent: recommend a strategy
 
-This only happens once per project. Subsequent `/ui-review` invocations skip Phase 4.
+Dispatch `@ui-ux-engineer` with this brief:
+
+> **Recommend-only pass.** Read `.github/skills/responsive-design/SKILL.md` and survey the project's stack (`package.json`, framework manifests, top-level directory structure). Recommend ONE of the four approaches (adaptive components / conditional rendering / multiple builds / progressive enhancement) for this project's first-time strategy adoption. Return: `recommended_approach`, `rationale` (2–3 sentences), `viewport_tier_boundaries` (default `mobile < 640`, `tablet 640–1023`, `desktop 1024–1919`, `wide ≥ 1920` unless the project's existing CSS suggests different boundaries — note the suggestion if so).
+
+### Phase 4.2 — Orchestrator: confirm with user
+
+Print the recommendation to the user, including a brief summary of all four approaches from the SKILL.md so they can compare. Ask:
+
+> Adopt the recommended approach (`{recommended_approach}`), or pick a different one? `[recommended / approach-1 / approach-2 / approach-3 / approach-4 / cancel]`
+
+Also ask whether to use the default viewport-tier boundaries or override them.
+
+### Phase 4.3 — Architect gate-check (subagent)
+
+Dispatch `@architect` with:
+
+> Quick gate-check: the project is about to adopt `{user-chosen approach}` for its responsive-design strategy. Any architectural reason to decline? Read `.github/skills/responsive-design/SKILL.md` and `.github/copilot-instructions.md`. Return one of: `APPROVE`, `REVISE` (with required changes), `REJECT` (with reason).
+
+### Phase 4.4 — Orchestrator: write the strategy file
+
+If the architect approved, write `.github/specs/_design/responsive-strategy.md` documenting:
+
+- The chosen approach + rationale
+- The viewport tier boundaries
+- Any architect-requested revisions
+
+If the architect requested revisions, surface them and ask the user to accept or override.
+
+If the architect rejected, surface the reason and stop. The user can adjust and re-run `/ui-review`.
+
+This entire Phase 4 only happens once per project. Subsequent `/ui-review` invocations skip it.
 
 ## Phase 5 — Console summary
 

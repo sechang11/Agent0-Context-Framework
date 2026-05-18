@@ -51,27 +51,45 @@ When the agent returns:
 
 ## Phase 3b — Run mode
 
+**The subagent runs the automated portion; the orchestrator (this session) walks the user through manual portions afterward.** This split exists because subagents can't prompt the user interactively (see AGENTS.md → Hard rules).
+
+### Phase 3b.1 — Subagent: run automated portion only
+
 Route to the **verification-engineer** agent via the Task tool with this brief:
 
-> Run the verification for the spec at `.github/specs/{feature}/`. Read its `verification.md` and walk through every checkpoint in order:
+> Run the **automated portion only** of the verification for the spec at `.github/specs/{feature}/`. Read its `verification.md` and process every checkpoint:
 >
 > - **automated** checkpoints: execute the `Automation:` command via Bash. Record the exit code. Pass if exit 0, fail otherwise. Capture the last ~15 lines of stdout/stderr for the report.
-> - **manual** checkpoints: print the steps to the user and ask them to confirm pass / fail / skip with a one-line note.
-> - **mixed** checkpoints: run the automated portion first; if it passes, walk the manual portion.
+>   - If the command can't run because a service or tool isn't available (e.g., Postgres isn't running, Playwright browsers aren't installed, Docker daemon is down), record `pending: needs <prereq>` rather than `fail`. Example: `pending: needs postgres`. Use this whenever the environment is the problem, not the feature.
+> - **manual** checkpoints: do NOT attempt to walk the user through them. Record `pending: needs walk-through`.
+> - **mixed** checkpoints: run the automated portion first. If it passes, record `pending: needs walk-through (manual portion)`. If it fails, record the failure on the automated portion and skip the manual portion (recording `pending: needs walk-through after automated fix`).
 >
-> For each checkpoint, update its `Last result` field in `verification.md` to `pass`, `fail`, or `skip` with the current timestamp.
+> Update each checkpoint's `Last result` field inline with the result and current timestamp.
 >
-> After every checkpoint has been run or skipped, update the frontmatter:
+> After every checkpoint has been processed, update the frontmatter:
 >
 > - `last_verified` to the current timestamp.
-> - `status` based on results: `passing` (all pass), `failing` (≥1 fail, none skipped), `partial` (any skipped or mixed-with-fail).
+> - `status`: `passing` (all pass), `failing` (≥1 fail, no pendings), `pending` (≥1 pending, no fails), `partial` (mix of pass + fail + pending).
 >
-> Return a summary: total CPs, passes, fails, skips, and any captured stderr from failing automated checkpoints.
+> Return a structured summary: total CPs, count by result state, captured stderr from any fails, and a list of pendings with their reason. Do NOT prompt the user for anything — your output goes back to the orchestrator, which handles walk-throughs in the main session.
 
-When the agent returns:
+### Phase 3b.2 — Orchestrator: walk the user through pendings
 
-1. Print a console summary (see Phase 5).
-2. If any checkpoint failed, suggest the dispatch line: `@software-engineer investigate .github/specs/{feature}/verification.md` (or `@verification-engineer` if the issue is the verification itself, not the feature).
+When the subagent returns, the orchestrator (this session) walks the user through every `pending: needs walk-through` checkpoint, one at a time:
+
+For each pending walk-through CP:
+
+1. Print the CP's identifier, description, steps, pass criteria, fail criteria.
+2. Ask the user: `pass / fail / skip — with a one-line note`. Use `AskUserQuestion` if available, otherwise a plain text prompt.
+3. Update the CP's `Last result` in `verification.md` directly (orchestrator can edit files).
+
+Skip `pending: needs <prereq>` CPs — those need the user to install the prerequisite first, not a walk-through. Surface them in the final summary with a "to unblock: install/start X" hint.
+
+After all walk-throughs are complete, re-compute the frontmatter `status` based on the final result mix and update it.
+
+### Phase 3b.3 — Final summary
+
+Print the console summary (see Phase 5). If any checkpoint failed, suggest the dispatch line: `@software-engineer investigate .github/specs/{feature}/verification.md` (or `@verification-engineer` if the issue is the verification itself, not the feature).
 
 ## Phase 3c — Dry-run mode
 
@@ -123,12 +141,23 @@ After every mode, print this structure to chat:
 ```
 ═══ Verification run — {feature} — {YYYY-MM-DD HH:MM} ═══
 
-  Status:  passing | failing | partial
-  Results: {P} pass, {F} fail, {S} skip ({N} total)
+  Status:  passing | failing | pending | partial
+  Results: {P} pass, {F} fail, {S} skip, {W} pending walk-through, {B} pending blocked ({N} total)
 
   Failures:
     • CP-{N}: {description} — {one-line reason, e.g. "exit 1 from `npm run verify:auth -- --case=expired-token`"}
     • CP-{N}: …
+
+  Pending — needs prerequisite (couldn't run, not a feature failure):
+    • CP-{N}: {description} — needs {prereq}
+        → to unblock: {one-line install/start command, e.g. "docker compose up postgres"}
+    • CP-{N}: …
+
+  Pending — needs walk-through:
+    • CP-{N}: {description}
+        → run /verify {feature} again or @verification-engineer can re-dispatch; the orchestrator
+          will walk these once prerequisites are addressed.
+    ({If walk-throughs were just completed inline, omit this section.})
 
   Skipped:
     • CP-{N}: {description} ({user's reason})

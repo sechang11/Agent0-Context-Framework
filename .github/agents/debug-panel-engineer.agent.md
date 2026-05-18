@@ -186,6 +186,7 @@ After confirmation:
 
 ## Rules
 
+- **You never prompt the user directly.** You're a subagent — you run in your own context and can't pause for input. When `/install-debug-panel` or `/demolish-debug` needs a user decision (plan confirmation, env-var name override, demolition confirmation), the orchestrator handles the question. You propose plans and return them; the orchestrator confirms with the user; you're re-dispatched with the user's choices baked in. (See `.github/AGENTS.md` → Hard rules.)
 - **The contract is the SKILL.md.** When in doubt about behavior, re-read it. Don't invent semantics.
 - **Off by default. No exceptions.** Gating logic goes in EVERY entry point — page, API routes, hotkey, panel UI. Belt and suspenders.
 - **No new dependencies.** If the project's stack would require adding a package to render the panel (e.g., they have no UI framework), decline. Don't add packages.
