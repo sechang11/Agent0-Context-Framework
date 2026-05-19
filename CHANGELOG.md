@@ -11,6 +11,17 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-19
+
+- Established a hard rule for git-worktree workflows: knowledge artifacts (specs, verification.md, bug reports, progress reports, themes, ui review notes, the framework-version file) always land in the MAIN TREE, not in any worktree. Code changes (implementation, tests, debug panel code) still go through worktrees as normal. This guarantees a clean handoff to any new conversation — whether it starts in the main tree or a fresh worktree, the project's knowledge is immediately visible.
+
+- Added a 'Knowledge artifacts and worktrees' section to .github/AGENTS.md that enumerates which files count as knowledge artifacts, gives the implementation rule (`git rev-parse --path-format=absolute --git-common-dir | xargs dirname` resolves the main tree from anywhere inside the repo, including worktrees), and explains why dual-write was considered and rejected (drift + git-status confusion).
+
+- Added a new FAQ entry to docs/getting-started.md so /help surfaces this when users ask about worktrees.
+
+- No prompts were modified — the rule lives in AGENTS.md where every orchestrator reads it before acting. Individual prompts trust the orchestrator to follow it. If a prompt is found writing knowledge artifacts to a worktree path in practice, that's a bug; fix the prompt to use the main-tree resolution command.
+
+
 ## 2026-05-18c
 
 - Web-debug panel is now a global overlay COMPONENT, not a separate page route. The previous design (panel at GET /__debug) defeated its own purpose — navigating to a debug page meant leaving the page you wanted to debug, losing state and re-render context. The new model mounts <DebugPanel/> globally in the host app's root layout. It toggles open/closed via the hotkey (Ctrl+Shift+D / Cmd+Shift+D) and renders as a fixed-position sidebar over (or alongside) the running page.

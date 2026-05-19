@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-18c",
+  "version": "2026-05-19",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -91,6 +91,15 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-19",
+      "notes": [
+        "Established a hard rule for git-worktree workflows: knowledge artifacts (specs, verification.md, bug reports, progress reports, themes, ui review notes, the framework-version file) always land in the MAIN TREE, not in any worktree. Code changes (implementation, tests, debug panel code) still go through worktrees as normal. This guarantees a clean handoff to any new conversation — whether it starts in the main tree or a fresh worktree, the project's knowledge is immediately visible.",
+        "Added a 'Knowledge artifacts and worktrees' section to .github/AGENTS.md that enumerates which files count as knowledge artifacts, gives the implementation rule (`git rev-parse --path-format=absolute --git-common-dir | xargs dirname` resolves the main tree from anywhere inside the repo, including worktrees), and explains why dual-write was considered and rejected (drift + git-status confusion).",
+        "Added a new FAQ entry to docs/getting-started.md so /help surfaces this when users ask about worktrees.",
+        "No prompts were modified — the rule lives in AGENTS.md where every orchestrator reads it before acting. Individual prompts trust the orchestrator to follow it. If a prompt is found writing knowledge artifacts to a worktree path in practice, that's a bug; fix the prompt to use the main-tree resolution command."
+      ]
+    },
     {
       "version": "2026-05-18c",
       "notes": [
