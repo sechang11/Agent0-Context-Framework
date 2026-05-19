@@ -30,6 +30,7 @@ These files are project-level knowledge. Agent0 writes them to the **main tree**
 | Specs | `.github/specs/{feature}/{requirements,design,tasks,verification,ui}.md` |
 | Bug reports | `.github/bugs/{timestamp}-{slug}.md` |
 | Progress reports | `PROGRESS_REPORT.md` (repo root) |
+| Next-step plans | `NEXT_STEPS.md` (repo root) |
 | Themes | `.github/themes/{name}/THEME.md` and `.github/themes/.adopted` |
 | Responsive-design strategy | `.github/specs/_design/responsive-strategy.md` |
 | UI/UX review notes | `.github/specs/{feature}/ui-review-{timestamp}.md` (when produced) |

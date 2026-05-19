@@ -60,7 +60,8 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/adopt-framework` | One-shot adoption — explore the codebase, interview, fill PROJECT slots |
 | `/spec` | Generate `requirements.md` + `design.md` + `tasks.md` for non-trivial work |
 | `/agents` | List the agents assigned to this project, one specialty line each |
-| `/report` | Convene every agent for a roundtable progress review; writes `PROGRESS_REPORT.md` |
+| `/report` | Convene agents for a roundtable progress review; writes `PROGRESS_REPORT.md`. Supports `--only` / `--exclude` to filter agents |
+| `/nextsteps` | Focused "what to work on next" — no ratings or gaps, just prioritized action items per agent. Writes `NEXT_STEPS.md`. Supports same filters as `/report` plus `--horizon short\|medium\|long` |
 | `/update-framework` | Pull latest additive files (commands, agent shims, manifest) from the public framework repo |
 | `/report-bug` | Capture a structured bug report at `.github/bugs/` — user description + auto-captured project state + routing suggestion |
 | `/verify` | Bootstrap or run a `verification.md` for a spec — runnable acceptance checkpoints, pass/fail recorded inline |

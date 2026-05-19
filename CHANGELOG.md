@@ -11,6 +11,19 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-19b
+
+- Added /nextsteps — focused 'what to work on next' command. Asks each agent the single question: what should we work on next? No ratings, no gaps analysis, no concerns inventory. Writes NEXT_STEPS.md at the repo root with a cross-agent prioritized table (priority / action / why / raised-by / effort / tied-to). Each recommendation is tied to a concrete artifact when possible (verification CP id, bug id, spec name). Supports --horizon short|medium|long to focus on different time scales.
+
+- Added --only and --exclude flags to /report. Filter the agent roster for the roundtable. /report --only architect produces a single-agent report; /report --exclude test-engineer convenes everyone else. Mutually exclusive flags. Single-agent reports work — scorecard becomes one row; top priorities come straight from that agent. Same filter convention applies to /nextsteps.
+
+- Both flags support comma-separated lists for multiple agents: --only architect,security-reviewer or --exclude test-engineer,verification-engineer.
+
+- NEXT_STEPS.md added to the AGENTS.md knowledge artifacts list — always written to the main tree regardless of worktree. Added to the framework's .gitignore alongside PROGRESS_REPORT.md.
+
+- Updated CLAUDE.md slash-commands table, docs/getting-started.md (new /nextsteps section + /report flag examples), and the changelog. /help inherits both.
+
+
 ## 2026-05-19a
 
 - Added /mode — per-project setting for whether code changes use worktree isolation. `review` (default) keeps the worktree review checkpoint; `solo` skips it and writes code directly to the main tree alongside knowledge artifacts. Designed for solo projects where the worktree round-trip is friction without benefit; the user trades the review checkpoint for less overhead and relies on git/GitHub for rollback.

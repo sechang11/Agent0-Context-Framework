@@ -126,12 +126,31 @@ Writes the file and stops. Doesn't auto-invoke the agent — you copy the sugges
 ### "I want to check progress"
 
 ```
-/report
+/report                                          # full roundtable — every agent
+/report --only architect                          # one agent's view only
+/report --only architect,security-reviewer       # subset of agents
+/report --exclude test-engineer                   # everyone except one
 ```
 
-Convenes every agent on the roster, has each analyze the project from their specialty (with sub-score breakdown out of 10), and writes a `PROGRESS_REPORT.md` at the repo root. Prints a substantial summary to chat: scorecard, top priorities, notable observations.
+Convenes agents from the roster, has each analyze the project from their specialty (with sub-score breakdown out of 10), and writes a `PROGRESS_REPORT.md` at the repo root. Prints a substantial summary to chat: scorecard, top priorities, notable observations.
+
+`--only` and `--exclude` are mutually exclusive. Single-agent invocations work — the scorecard becomes one row and the "Top priorities" come straight from that agent without cross-agent synthesis. Useful when you want focused feedback (e.g. just the architect's view on a system design) without convening the whole roster.
 
 Re-running overwrites the previous report with a fresh timestamp.
+
+### "I want recommendations on what to work on next"
+
+```
+/nextsteps                          # every agent — prioritized action items
+/nextsteps --only architect          # just one agent's recommendations
+/nextsteps --exclude test-engineer   # all except one
+/nextsteps --horizon medium          # focus on 1-2 months out (default: short, 1-2 weeks)
+/nextsteps --horizon long            # focus on next quarter+
+```
+
+Lighter sibling of `/report`. Skips ratings, gaps analysis, and concerns inventory — just asks each agent "what should we work on next?" Writes a `NEXT_STEPS.md` at the repo root with a cross-agent prioritized table (priority / action / why / raised-by / effort / tied to). Each recommendation is tied to a concrete artifact when possible (a verification checkpoint, a bug id, a spec name).
+
+Use `/report` when you want a full health check. Use `/nextsteps` when you already know where the project stands and you just need an actionable list.
 
 ### "I want to pick a visual style"
 

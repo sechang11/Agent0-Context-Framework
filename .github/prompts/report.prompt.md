@@ -5,7 +5,21 @@ description: Convene every agent for a structured roundtable progress review wit
 
 # /report
 
-Convene every agent on the roster, have each analyze the project from their specialty **using a structured rubric**, consolidate their input into a single timestamped `PROGRESS_REPORT.md` at the repo root, and print a substantial summary to the chat. The console summary is not optional — the user should be able to read it and understand the state of the project without opening the file.
+Convene agents from the roster, have each analyze the project from their specialty **using a structured rubric**, consolidate their input into a single timestamped `PROGRESS_REPORT.md` at the repo root, and print a substantial summary to the chat. The console summary is not optional — the user should be able to read it and understand the state of the project without opening the file.
+
+## Invocation patterns
+
+| Pattern | Behavior |
+|---|---|
+| `/report` | Convene every agent on the roster (default — full roundtable). |
+| `/report --only architect` | Convene only the named agent(s). Comma-separated list for multiple: `--only architect,security-reviewer`. |
+| `/report --exclude test-engineer` | Convene every agent EXCEPT the named one(s). Comma-separated list: `--exclude test-engineer,verification-engineer`. |
+
+`--only` and `--exclude` are mutually exclusive. If both are passed, ask the user which they meant.
+
+Agent names match the `name` field in `.claude/agents/*.md` (e.g. `architect`, `software-engineer`, `code-reviewer`, `security-reviewer`, `test-engineer`, `verification-engineer`, `ui-ux-engineer`, `debug-panel-engineer`, plus any domain experts). If a name doesn't match, suggest the closest match and stop.
+
+When the filter resolves to a single agent, the report is still produced — but the "Composite rating" field shows that single agent's rating, the scorecard is one row, and the "Top priorities" synthesis is straight from that agent's recommendations (no merging across agents because there's only one).
 
 ## The rubric
 
@@ -28,9 +42,18 @@ Agents pick the five dimensions that matter most for their domain. Suggested sta
 - **test-engineer** — coverage breadth, edge-case coverage, assertion quality, test maintainability, test speed
 - **domain experts** — choose five dimensions appropriate to their specialty
 
-## Phase 1 — Discover the roster
+## Phase 1 — Discover the roster (with optional filtering)
 
-List `.claude/agents/*.md` and exclude any file starting with `_` (templates). For each remaining agent, read its frontmatter and capture the `name`. That's who you'll invoke.
+1. List `.claude/agents/*.md` and exclude any file starting with `_` (templates). For each remaining agent, read its frontmatter and capture the `name`. This is the full roster.
+
+2. Apply filters:
+   - If `--only` was passed, narrow the roster to only the named agents. Validate every name appears in the roster — suggest closest match and stop if not.
+   - If `--exclude` was passed, remove the named agents from the roster. Same validation.
+   - If both were passed, ask the user which they meant. Stop.
+
+3. If the filtered roster is empty (e.g. `--exclude` left no one), stop with a clear message.
+
+4. If the filtered roster has exactly one agent, set a flag `single_agent_mode=true`. The downstream phases adjust their output (single-row scorecard; "Top priorities" is straight from this one agent; no cross-agent synthesis).
 
 ## Phase 2 — Read prior state (if any)
 
@@ -113,6 +136,7 @@ Aggregate the agents' replies into a single Markdown document and write it to `P
 **Generated:** {YYYY-MM-DD HH:MM} {timezone abbreviation, or UTC if unknown}
 **Previous report:** {previous Generated timestamp, or "none — first report"}
 **Composite rating:** **X.X / 10** across N agent(s)
+**Filter:** {if --only or --exclude was used: list it; otherwise: "all agents (no filter)"}
 
 ## Composite scorecard
 
