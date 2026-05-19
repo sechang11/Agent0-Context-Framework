@@ -139,9 +139,11 @@ Top 5 priorities:
 
 Themes (cross-agent):
   • {1–3 bullets, or "nothing crossed multiple agents" if so}
-
-Written to: NEXT_STEPS.md
 ```
+
+**Written to:** [NEXT_STEPS.md](NEXT_STEPS.md)
+
+The file link MUST be broken out as a Markdown link below the code block — bare paths inside the code block don't render as clickable (see AGENTS.md → "Link MD files in chat output").
 
 ## Rules
 

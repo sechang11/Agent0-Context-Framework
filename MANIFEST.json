@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-19b",
+  "version": "2026-05-19c",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -97,6 +97,15 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-19c",
+      "notes": [
+        "Added a hard rule to .github/AGENTS.md: 'Link MD files in chat output.' Whenever an Agent0-generated .md file is mentioned in chat (orchestrator summaries, dispatch suggestions, next-step hints), format the path as a clickable Markdown link — `[path](path)` — so the user can preview without manually copying. Applies to every framework artifact: spec files, bug reports, PROGRESS_REPORT.md, NEXT_STEPS.md, theme files, responsive-strategy.md, framework docs.",
+        "Bare paths inside fenced code blocks don't render as links — they show as literal text. Updated the most-visible command summary outputs (/spec, /verify, /cover --discover, /report, /nextsteps, /report-bug) to keep the structural summary in a code block but break the file references out as Markdown links below. Dispatch suggestions (`@software-engineer investigate <link>`) also use linked paths so the user can preview the target file before running the dispatch.",
+        "The rule lives in AGENTS.md as the single source of truth — every orchestrator reads it before any output. Individual prompts that haven't been updated yet will inherit the rule via the orchestrator. If a prompt's output is found showing bare paths in code blocks, that's the bug to fix.",
+        "No effect on file contents — only on how chat output formats path references. The verification.md, spec files, bug reports themselves remain unchanged."
+      ]
+    },
     {
       "version": "2026-05-19b",
       "notes": [

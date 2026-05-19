@@ -189,14 +189,15 @@ Captured:
   • Active spec: {feature-name, or "none"}
   • Environment: {one-line — OS + primary runtime}
 
-To investigate, run:
-
-  @{primary-agent} investigate .github/bugs/{bug-id}.md
-
-Or open the report manually: .github/bugs/{bug-id}.md
 ```
 
-Keep it scannable. The user should be able to either dispatch the agent immediately or open the file for more detail, with one glance at this summary.
+**Bug report:** [.github/bugs/{bug-id}.md](.github/bugs/{bug-id}.md)
+
+To investigate, run:
+
+> `@{primary-agent} investigate` [.github/bugs/{bug-id}.md](.github/bugs/{bug-id}.md)
+
+Keep it scannable. The user should be able to either dispatch the agent immediately or click the link to preview the report, with one glance at this summary. The file link MUST be broken out as a Markdown link below the code block — bare paths inside the code block don't render as clickable (see AGENTS.md → "Link MD files in chat output").
 
 ## Rules
 

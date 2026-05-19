@@ -243,10 +243,11 @@ Roster gap flagged: {proposed role}. {one sentence why.}
 Notable observations:
   • {3–5 bullets surfacing the most interesting findings — what surprised, what concerns, what's worth celebrating. Pull from cross-cutting themes.}
 
-Written to: PROGRESS_REPORT.md
 ```
 
-This summary must be in the chat output, **before** any "anything else?" closing. Do not collapse it. Do not replace it with "report written."
+**Written to:** [PROGRESS_REPORT.md](PROGRESS_REPORT.md)
+
+This summary must be in the chat output, **before** any "anything else?" closing. Do not collapse it. Do not replace it with "report written." The file link MUST be broken out as a Markdown link below the code block — bare paths inside the code block don't render as clickable (see AGENTS.md → "Link MD files in chat output").
 
 ## Rules
 

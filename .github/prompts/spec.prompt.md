@@ -123,3 +123,27 @@ Order the tasks so the system stays working at each step. Each task is small eno
 - Feature name (kebab-case).
 - Which components are likely involved (your guess; user will correct).
 - Whether this is a behavior change that could be configuration vs a true platform change.
+
+## Final summary
+
+After each file is written (requirements.md → design.md after architect review → tasks.md), print a concise summary with all three files presented as clickable Markdown links so the user can preview each (per AGENTS.md → "Link MD files in chat output"). Use this structure:
+
+```
+═══ Spec produced — {feature-name} ═══
+
+  Status: {drafting | architect-review | complete}
+```
+
+**Files:**
+
+- [.github/specs/{feature-name}/requirements.md](.github/specs/{feature-name}/requirements.md)
+- [.github/specs/{feature-name}/design.md](.github/specs/{feature-name}/design.md) — *awaiting `@architect` review* / *approved*
+- [.github/specs/{feature-name}/tasks.md](.github/specs/{feature-name}/tasks.md) — *(after design approval)*
+
+**Next:**
+
+- After `requirements.md`: write `design.md`, then route to `@architect` for review.
+- After `design.md`: stop. Await `@architect`. Don't write `tasks.md` until the design is approved.
+- After all three: `/verify {feature-name} --bootstrap` to translate acceptance criteria into runnable checkpoints. Optionally `/ui-review {feature-name}` if the feature has a UI surface.
+
+The file links MUST be Markdown links outside any fenced code block. Bare paths inside code blocks aren't clickable.

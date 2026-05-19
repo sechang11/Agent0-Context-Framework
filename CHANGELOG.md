@@ -11,6 +11,17 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-19c
+
+- Added a hard rule to .github/AGENTS.md: 'Link MD files in chat output.' Whenever an Agent0-generated .md file is mentioned in chat (orchestrator summaries, dispatch suggestions, next-step hints), format the path as a clickable Markdown link — `[path](path)` — so the user can preview without manually copying. Applies to every framework artifact: spec files, bug reports, PROGRESS_REPORT.md, NEXT_STEPS.md, theme files, responsive-strategy.md, framework docs.
+
+- Bare paths inside fenced code blocks don't render as links — they show as literal text. Updated the most-visible command summary outputs (/spec, /verify, /cover --discover, /report, /nextsteps, /report-bug) to keep the structural summary in a code block but break the file references out as Markdown links below. Dispatch suggestions (`@software-engineer investigate <link>`) also use linked paths so the user can preview the target file before running the dispatch.
+
+- The rule lives in AGENTS.md as the single source of truth — every orchestrator reads it before any output. Individual prompts that haven't been updated yet will inherit the rule via the orchestrator. If a prompt's output is found showing bare paths in code blocks, that's the bug to fix.
+
+- No effect on file contents — only on how chat output formats path references. The verification.md, spec files, bug reports themselves remain unchanged.
+
+
 ## 2026-05-19b
 
 - Added /nextsteps — focused 'what to work on next' command. Asks each agent the single question: what should we work on next? No ratings, no gaps analysis, no concerns inventory. Writes NEXT_STEPS.md at the repo root with a cross-agent prioritized table (priority / action / why / raised-by / effort / tied-to). Each recommendation is tied to a concrete artifact when possible (verification CP id, bug id, spec name). Supports --horizon short|medium|long to focus on different time scales.

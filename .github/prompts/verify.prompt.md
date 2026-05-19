@@ -125,7 +125,6 @@ After every mode, print this structure to chat:
 ```
 ═══ Verification bootstrapped — {feature} ═══
 
-  File:        .github/specs/{feature}/verification.md
   Checkpoints: {N} total ({A} automated, {M} manual, {X} mixed)
   Status:      draft (run /verify {feature} to execute)
 
@@ -136,7 +135,11 @@ After every mode, print this structure to chat:
     These should be clarified in requirements.md before verification is meaningful.
 ```
 
+**File:** [.github/specs/{feature}/verification.md](.github/specs/{feature}/verification.md)
+
 **Run mode:**
+
+Print the structural summary in a code block, then break the file references out as Markdown links below so the user can click to preview (see AGENTS.md → "Link MD files in chat output"):
 
 ```
 ═══ Verification run — {feature} — {YYYY-MM-DD HH:MM} ═══
@@ -145,32 +148,30 @@ After every mode, print this structure to chat:
   Results: {P} pass, {F} fail, {S} skip, {W} pending walk-through, {B} pending blocked ({N} total)
 
   Failures:
-    • CP-{N}: {description} — {one-line reason, e.g. "exit 1 from `npm run verify:auth -- --case=expired-token`"}
+    • CP-{N}: {description} — {one-line reason}
     • CP-{N}: …
 
   Pending — needs prerequisite (couldn't run, not a feature failure):
     • CP-{N}: {description} — needs {prereq}
-        → to unblock: {one-line install/start command, e.g. "docker compose up postgres"}
-    • CP-{N}: …
+        → to unblock: {one-line install/start command}
 
   Pending — needs walk-through:
     • CP-{N}: {description}
-        → run /verify {feature} again or @verification-engineer can re-dispatch; the orchestrator
-          will walk these once prerequisites are addressed.
     ({If walk-throughs were just completed inline, omit this section.})
 
   Skipped:
     • CP-{N}: {description} ({user's reason})
-
-  Updated: .github/specs/{feature}/verification.md (last_verified field + per-CP results)
-
-{If any failures, suggest:}
-  To investigate failures:
-    @software-engineer investigate .github/specs/{feature}/verification.md
-
-  To file a bug report:
-    /report-bug Verification failed for {feature}: CP-{N}
 ```
+
+**Updated:** [.github/specs/{feature}/verification.md](.github/specs/{feature}/verification.md)  *(last_verified field + per-CP results)*
+
+{If any failures, append a dispatch suggestion as plain Markdown so the file reference inside it stays clickable:}
+
+To investigate failures, run:
+
+> `@software-engineer investigate` [.github/specs/{feature}/verification.md](.github/specs/{feature}/verification.md)
+
+Or file a bug report: `/report-bug Verification failed for {feature}: CP-{N}`
 
 **Dry-run mode:**
 
@@ -184,6 +185,8 @@ After every mode, print this structure to chat:
 
   No changes written. Fix issues by hand or re-bootstrap with /verify {feature} --bootstrap.
 ```
+
+**File examined:** [.github/specs/{feature}/verification.md](.github/specs/{feature}/verification.md)
 
 ## Rules
 

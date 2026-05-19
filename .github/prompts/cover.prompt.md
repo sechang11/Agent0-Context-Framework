@@ -151,45 +151,33 @@ If any feature fails to generate (agent can't determine behavior at a surface, o
 
 ### Phase D6 — Final summary
 
-After all features are processed, print a substantial summary. Each feature is shown with its verification.md path on the next line, indented with a `→` arrow — the user should be able to scan the list and jump straight to any file:
+Print the structural overview in a code block, then break the verification files out as clickable Markdown links so the user can jump straight to any file (see AGENTS.md → "Link MD files in chat output"):
 
 ```
 ═══ /cover --discover complete ═══
-
-Coverage written:
-
-  ✓ auth-flow                    (4 checkpoints, 1 concern)
-      → .github/specs/auth-flow/verification.md
-
-  ✓ user-dashboard               (6 checkpoints, 0 concerns)
-      → .github/specs/user-dashboard/verification.md
-
-  ✓ checkout                     (8 checkpoints, 3 concerns ← review!)
-      → .github/specs/checkout/verification.md
-
-  ✓ admin-panel                  (3 checkpoints, 0 concerns)
-      → .github/specs/admin-panel/verification.md
-
-  ✓ notifications                (2 checkpoints, 1 concern)
-      → .github/specs/notifications/verification.md
-
-  ⚠ shared                       (skipped — unclaimed, user declined to create)
 
 Total: 5 features covered, 23 checkpoints, 5 concerns flagged.
 
 ⚠️  All verifications are code-derived (source: code). They document
     CURRENT behavior, not desired behavior. Concerns are likely bugs
     in current code — review each and consider /report-bug if real.
-
-To capture initial pass/fail results for any feature:
-    /verify {feature-name}
-
-To upgrade a code-derived verification to a spec-derived contract:
-    1. Write .github/specs/{feature}/requirements.md
-    2. /verify {feature} --bootstrap
 ```
 
-Skipped features (like the `shared` row above) show only the reason; no path arrow since no file was written for them.
+**Coverage written:**
+
+- ✓ **auth-flow** — [.github/specs/auth-flow/verification.md](.github/specs/auth-flow/verification.md) *(4 checkpoints, 1 concern)*
+- ✓ **user-dashboard** — [.github/specs/user-dashboard/verification.md](.github/specs/user-dashboard/verification.md) *(6 checkpoints, 0 concerns)*
+- ✓ **checkout** — [.github/specs/checkout/verification.md](.github/specs/checkout/verification.md) *(8 checkpoints, 3 concerns ← review!)*
+- ✓ **admin-panel** — [.github/specs/admin-panel/verification.md](.github/specs/admin-panel/verification.md) *(3 checkpoints, 0 concerns)*
+- ✓ **notifications** — [.github/specs/notifications/verification.md](.github/specs/notifications/verification.md) *(2 checkpoints, 1 concern)*
+- ⚠ **shared** — *skipped (unclaimed, user declined to create)*
+
+**Next:**
+
+- To capture initial pass/fail results for any feature: `/verify {feature-name}`
+- To upgrade a code-derived verification to a spec-derived contract: write `.github/specs/{feature}/requirements.md` then `/verify {feature} --bootstrap`
+
+Skipped features (like `shared` above) show only the reason; no link since no file was written for them.
 
 The `⚠️` reminder is mandatory. After batch discovery, it's easy for the user to forget that every file is a snapshot, not a contract.
 
