@@ -352,6 +352,32 @@ Heuristics:
 
 If you can't decide, run `/cover --discover` — the agent scans your codebase and proposes feature boundaries, and you confirm or edit them before any files are written.
 
+### Can I skip the worktree review step for solo projects?
+
+Yes — Agent0 supports a per-project `solo` mode. Switch via:
+
+```
+/mode solo
+```
+
+In solo mode, code-writing subagents skip worktree isolation and write directly to the main tree alongside knowledge artifacts. No review checkpoint between subagent output and your main branch. The tradeoff: you trust git/GitHub as your safety net — commit and push regularly so you have rollback points if something goes wrong.
+
+To switch back to the default (`review` mode with worktree isolation for code changes):
+
+```
+/mode review
+```
+
+To check the current mode:
+
+```
+/mode
+```
+
+The mode is stored at `.github/.agent0-mode` (a single-line file containing `solo` or `review`; absent means `review`). If you don't want collaborators inheriting your mode, add the file to `.gitignore`.
+
+**Knowledge artifacts always go to the main tree regardless of mode** — `solo` only affects code-change routing.
+
 ### Does Agent0 work with git worktrees? Where do generated files land?
 
 Yes, and the design accounts for it explicitly. Agent0 distinguishes two categories of files:

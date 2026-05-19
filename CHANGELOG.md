@@ -11,6 +11,19 @@ Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a lette
 suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-19a
+
+- Added /mode — per-project setting for whether code changes use worktree isolation. `review` (default) keeps the worktree review checkpoint; `solo` skips it and writes code directly to the main tree alongside knowledge artifacts. Designed for solo projects where the worktree round-trip is friction without benefit; the user trades the review checkpoint for less overhead and relies on git/GitHub for rollback.
+
+- Mode is stored at `.github/.agent0-mode` (single-line file). Absent means `review`. The orchestrator reads this at session start and adjusts its worktree-isolation behavior accordingly.
+
+- Switching to solo prompts the user to confirm the tradeoff first — no silent behavior changes. Suggested but not required: add `.github/.agent0-mode` to `.gitignore` if you don't want collaborators inheriting your mode setting.
+
+- Knowledge artifacts ALWAYS go to the main tree regardless of mode — the rule from 2026-05-19 stands. Mode only affects code-change routing.
+
+- Updated AGENTS.md with a new hard rule about mode-driven isolation and an extended 'Knowledge artifacts and worktrees' section explaining the solo-vs-review behavior. Added FAQ entry to docs/getting-started.md so /help surfaces solo mode when users ask about reducing overhead.
+
+
 ## 2026-05-19
 
 - Established a hard rule for git-worktree workflows: knowledge artifacts (specs, verification.md, bug reports, progress reports, themes, ui review notes, the framework-version file) always land in the MAIN TREE, not in any worktree. Code changes (implementation, tests, debug panel code) still go through worktrees as normal. This guarantees a clean handoff to any new conversation — whether it starts in the main tree or a fresh worktree, the project's knowledge is immediately visible.

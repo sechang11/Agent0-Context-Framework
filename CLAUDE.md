@@ -71,6 +71,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/help` | Friendly newbie-oriented overview — agents, commands, concepts, workflows. Surfaces `docs/getting-started.md` in chat. Optional topic flag (`agents`, `commands`, `concepts`, `workflow`, `debugging`, `updating`, `faq`). Read-only |
 | `/theme` | Browse, pick, save, apply, mix, or import design themes via the shopper showroom interaction. Operates on `.github/themes/`. Visual depth flags `--text` (default), `--swatch`, `--mockup1/2/full` |
 | `/ui-review` | Invoke `@ui-ux-engineer` to review a feature's UX — flow, adaptive design per viewport tier, theme consistency. Optional `--engagement` flag adds engagement-hacking analysis in a separate section |
+| `/mode` | Show or set framework mode. `solo` disables worktree isolation (code goes directly to main tree); `review` (default) keeps worktree isolation for code changes. Knowledge artifacts always go to main tree |
 
 ## Specs
 

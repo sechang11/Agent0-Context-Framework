@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-19",
+  "version": "2026-05-19a",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -25,6 +25,7 @@
     { "path": ".claude/commands/help.md",               "class": "additive" },
     { "path": ".claude/commands/theme.md",              "class": "additive" },
     { "path": ".claude/commands/ui-review.md",          "class": "additive" },
+    { "path": ".claude/commands/mode.md",               "class": "additive" },
 
     { "path": ".github/prompts/adopt-framework.prompt.md",     "class": "additive" },
     { "path": ".github/prompts/spec.prompt.md",                "class": "additive" },
@@ -40,6 +41,7 @@
     { "path": ".github/prompts/help.prompt.md",                "class": "additive" },
     { "path": ".github/prompts/theme.prompt.md",               "class": "additive" },
     { "path": ".github/prompts/ui-review.prompt.md",           "class": "additive" },
+    { "path": ".github/prompts/mode.prompt.md",                "class": "additive" },
 
     { "path": ".github/bugs/README.md",                     "class": "additive" },
     { "path": ".github/skills/web-debug/SKILL.md",          "class": "additive" },
@@ -87,10 +89,21 @@
     { "command": "/version",           "purpose": "Report installed framework version, latest available upstream, the gap, available slash commands, and recent changelog entries. Read-only. Works offline." },
     { "command": "/help",              "purpose": "Friendly newbie-oriented overview of the framework — agents, commands, concepts, workflows. Surfaces docs/getting-started.md in chat with optional topic drill-down. Read-only." },
     { "command": "/theme",             "purpose": "Browse, pick, save, apply, mix, or import design themes via the shopper showroom interaction. Operates on .github/themes/. Visual depth flags --text (default), --swatch, --mockup1/2/full." },
-    { "command": "/ui-review",         "purpose": "Invoke @ui-ux-engineer to review a feature's UX — flow friction, adaptive design per viewport tier, theme consistency. Optional --engagement flag adds engagement-hacking analysis (separate section). Optional --viewport tier focus." }
+    { "command": "/ui-review",         "purpose": "Invoke @ui-ux-engineer to review a feature's UX — flow friction, adaptive design per viewport tier, theme consistency. Optional --engagement flag adds engagement-hacking analysis (separate section). Optional --viewport tier focus." },
+    { "command": "/mode",              "purpose": "Show or set framework mode. `solo` disables worktree isolation (code goes directly to main tree, trust git/GitHub for rollback); `review` (default) keeps worktree isolation for code changes. Knowledge artifacts always go to main tree regardless." }
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-19a",
+      "notes": [
+        "Added /mode — per-project setting for whether code changes use worktree isolation. `review` (default) keeps the worktree review checkpoint; `solo` skips it and writes code directly to the main tree alongside knowledge artifacts. Designed for solo projects where the worktree round-trip is friction without benefit; the user trades the review checkpoint for less overhead and relies on git/GitHub for rollback.",
+        "Mode is stored at `.github/.agent0-mode` (single-line file). Absent means `review`. The orchestrator reads this at session start and adjusts its worktree-isolation behavior accordingly.",
+        "Switching to solo prompts the user to confirm the tradeoff first — no silent behavior changes. Suggested but not required: add `.github/.agent0-mode` to `.gitignore` if you don't want collaborators inheriting your mode setting.",
+        "Knowledge artifacts ALWAYS go to the main tree regardless of mode — the rule from 2026-05-19 stands. Mode only affects code-change routing.",
+        "Updated AGENTS.md with a new hard rule about mode-driven isolation and an extended 'Knowledge artifacts and worktrees' section explaining the solo-vs-review behavior. Added FAQ entry to docs/getting-started.md so /help surfaces solo mode when users ask about reducing overhead."
+      ]
+    },
     {
       "version": "2026-05-19",
       "notes": [
