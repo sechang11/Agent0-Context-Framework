@@ -87,7 +87,13 @@ Skip `pending: needs <prereq>` CPs — those need the user to install the prereq
 
 After all walk-throughs are complete, re-compute the frontmatter `status` based on the final result mix and update it.
 
-### Phase 3b.3 — Final summary
+### Phase 3b.3 — Regenerate the feature tree
+
+After all per-CP results are recorded and the frontmatter `last_verified`/`status` is updated, regenerate `FEATURE_TREE.md` at the main tree's repo root. This keeps the table of contents' status column in sync with the latest verification results. Follow the logic in `.github/prompts/feature-tree.prompt.md`.
+
+Same applies to bootstrap mode and dry-run mode (when bootstrap writes a new verification.md, the tree needs to pick up the new feature; dry-run doesn't change anything so it can skip).
+
+### Phase 3b.4 — Final summary
 
 Print the console summary (see Phase 5). If any checkpoint failed, suggest the dispatch line: `@software-engineer investigate .github/specs/{feature}/verification.md` (or `@verification-engineer` if the issue is the verification itself, not the feature).
 

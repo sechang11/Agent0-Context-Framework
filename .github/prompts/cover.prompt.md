@@ -239,6 +239,12 @@ Route to `verification-engineer` via the Task tool with this brief:
 >
 > Write the file to `.github/specs/{feature-name}/verification.md`. Create the parent directory if needed. Return a summary: number of checkpoints written, automation coverage (X of Y automated), any concerns flagged, and any surfaces where you couldn't determine observable behavior clearly.
 
+## Phase 3.5 — Regenerate the feature tree
+
+After the verification.md file is written (in single-feature mode this happens once; in `--discover` mode it happens once per feature, or once at the very end after all features are processed), regenerate `FEATURE_TREE.md` at the main tree's repo root. Follow the logic in `.github/prompts/feature-tree.prompt.md`.
+
+In `--discover` mode, regenerate ONCE at the end of Phase D5 (the batch run) rather than after each feature — that keeps the file consistent and saves redundant work.
+
 ## Phase 4 — Confirm file write + render the caveat
 
 After the agent returns:

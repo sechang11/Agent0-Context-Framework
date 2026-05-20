@@ -371,6 +371,18 @@ Heuristics:
 
 If you can't decide, run `/cover --discover` — the agent scans your codebase and proposes feature boundaries, and you confirm or edit them before any files are written.
 
+### Where do my files actually land — main tree or worktree?
+
+Honest answer: this depends on your mode.
+
+**In `solo` mode** (recommended for solo projects — set via `/mode solo` or chosen at adoption time): **everything goes to the main tree.** Specs, verifications, bug reports, themes, progress reports, AND code changes. No worktree round-trip. When Claude says "writing to `.github/specs/auth-flow/verification.md`," that file appears in your actual project directory, not inside `.claude/worktrees/`. You don't have to tell Claude "make changes to the real files" — there's only one set of files.
+
+**In `review` mode** (default — for multi-contributor projects): **knowledge artifacts** (specs, verifications, bug reports, themes, `PROGRESS_REPORT.md`, `NEXT_STEPS.md`, `FEATURE_TREE.md`) still go directly to the main tree, because every conversation needs to see them. **Code changes** go to a worktree at `.claude/worktrees/{task-id}/` so you can review the diff before merging into main.
+
+If you've been telling Claude "write to the real files" in every conversation, you probably want `solo` mode. Switch via `/mode solo`. Confirm via `/mode`.
+
+The "main tree" or "repo root" the orchestrator writes to is your actual project directory, resolved via `git rev-parse --git-common-dir | xargs dirname` — not the worktree's `pwd`. So even in `review` mode, knowledge-artifact paths like `.github/specs/auth-flow/verification.md` always refer to the file in your actual project.
+
 ### Can I skip the worktree review step for solo projects?
 
 Yes — Agent0 supports a per-project `solo` mode. Switch via:

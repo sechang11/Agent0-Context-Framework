@@ -124,6 +124,12 @@ Order the tasks so the system stays working at each step. Each task is small eno
 - Which components are likely involved (your guess; user will correct).
 - Whether this is a behavior change that could be configuration vs a true platform change.
 
+## Regenerate the feature tree
+
+After all three spec files are written and architect approval is done (or whenever a spec file is added/modified), regenerate `FEATURE_TREE.md` at the main tree's repo root. The simplest way: follow the logic in `.github/prompts/feature-tree.prompt.md` to walk `.github/specs/` and rewrite the file. This keeps the table of contents in sync without the user having to do anything.
+
+If the user runs `/spec` and aborts before writing files, skip this step.
+
 ## Final summary
 
 After each file is written (requirements.md → design.md after architect review → tasks.md), print a concise summary with all three files presented as clickable Markdown links so the user can preview each (per AGENTS.md → "Link MD files in chat output"). Use this structure:

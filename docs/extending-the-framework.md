@@ -82,13 +82,13 @@ Add the row to the slash-commands table so the framework's CLAUDE.md stays in sy
 
 ### 5. Regenerate CHANGELOG.md
 
-After editing `MANIFEST.json`, run the changelog generator so the human-readable `CHANGELOG.md` at the repo root stays in sync:
+After editing `MANIFEST.json`, regenerate the human-readable `CHANGELOG.md` so it stays in sync. The framework no longer ships a Python script for this — Claude Code does the regeneration on demand.
 
-```bash
-python scripts/generate-changelog.py
-```
+In your Claude Code session, just say:
 
-This reads the `changelog` array from `MANIFEST.json` and rewrites `CHANGELOG.md`. Don't edit `CHANGELOG.md` by hand — the manifest is the source of truth.
+> Regenerate `CHANGELOG.md` from `MANIFEST.json`'s changelog array. Latest version first, all changelog entries, format each as `## {version}` followed by the notes as bulleted Markdown.
+
+The agent reads the manifest, formats the entries, and writes the file. Takes a few seconds. Same result as a script would produce. Don't edit `CHANGELOG.md` by hand — the manifest is the source of truth and the next regen overwrites your edits.
 
 ### 6. Commit and push
 

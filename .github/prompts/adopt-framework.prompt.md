@@ -47,15 +47,18 @@ Those come from the interview.
 
 ## Phase 3 — Confirm scope before filling anything
 
-Ask the user, in one round, no more than ~5 questions:
+Ask the user, in one round, no more than ~6 questions:
 
-1. **Tier.** Minimum viable (`copilot-instructions` + `security` + one generalist agent), Standard (+ `architecture`, `testing`, language-specific instructions, 2–3 agents), or Full (+ skills, memory layer, spec workflow, CHEATSHEET)? Recommend the smallest tier that fits what you observed.
-2. **Architectural invariants.** "What are the 1–3 things about this codebase that, if violated, would make you genuinely upset? Things a new contributor needs to internalize on day one." This is the highest-leverage slot. Don't guess it.
-3. **Hard rules.** Anything off-limits (files not to read, commands not to run, dependencies not to touch, branches not to push to)? Defaults already in `security.instructions.md` cover secrets and destructive commands — ask only for project-specific additions.
-4. **Personas.** Beyond `software-engineer`, do you need any specialized agents (e.g. a domain expert, a reviewer for a specific layer)? Only add what they'll actually invoke.
-5. **Anything I observed wrong.** Show your inferred component list and primary language(s); ask them to correct.
+1. **Solo or team?** This sets the framework's mode. Default `review` mode uses git-worktree isolation for code changes — useful for multi-contributor projects where reviewing AI-generated code in a separate workspace before merging matters. `solo` mode skips that — all changes (knowledge artifacts AND code) go directly to the main tree, no worktree round-trip. **For solo developers on small projects, `solo` is almost certainly the right choice.** It eliminates a whole class of "wait, where did Claude write that file?" confusion. The setting can be changed later via `/mode`.
+2. **Tier.** Minimum viable (`copilot-instructions` + `security` + one generalist agent), Standard (+ `architecture`, `testing`, language-specific instructions, 2–3 agents), or Full (+ skills, memory layer, spec workflow, CHEATSHEET)? Recommend the smallest tier that fits what you observed.
+3. **Architectural invariants.** "What are the 1–3 things about this codebase that, if violated, would make you genuinely upset? Things a new contributor needs to internalize on day one." This is the highest-leverage slot. Don't guess it.
+4. **Hard rules.** Anything off-limits (files not to read, commands not to run, dependencies not to touch, branches not to push to)? Defaults already in `security.instructions.md` cover secrets and destructive commands — ask only for project-specific additions.
+5. **Personas.** Beyond `software-engineer`, do you need any specialized agents (e.g. a domain expert, a reviewer for a specific layer)? Only add what they'll actually invoke.
+6. **Anything I observed wrong.** Show your inferred component list and primary language(s); ask them to correct.
 
-If the user gives a one-word answer or "you decide," pick the conservative default (Minimum tier, no extra personas) and proceed. Don't keep asking.
+If the user gives a one-word answer or "you decide," pick conservative defaults (solo mode if they describe themselves as one person, otherwise review; Minimum tier; no extra personas) and proceed. Don't keep asking.
+
+After Phase 3 question 1, if the user picked `solo`: write `solo\n` to `.github/.agent0-mode` (create the directory if needed). If `review`: do nothing — `review` is the default and needs no marker file.
 
 ## Phase 4 — Fill the slots
 
