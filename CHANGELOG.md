@@ -7,6 +7,17 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-20b
+
+- Added scripts/statusline.sh — a small bash script that prints the project's current framework version (and mode if solo) to stdout. Designed to be invoked by Claude Code's `statusLine.command` setting so the framework version is visible at the bottom of every chat session, without typing /version. Walks up to the main tree via `git rev-parse --git-common-dir` so it works from any worktree.
+
+- Output formats: `Agent0 v2026-05-20b (solo)` if in solo mode, `Agent0 v2026-05-20b` in default review mode, or empty (no status line content) for projects that haven't adopted the framework or aren't git repos at all. The empty case is intentional — installing globally is safe; non-adopted projects just show no status.
+
+- Distributed via the manifest as additive — adopted projects get a local copy at scripts/statusline.sh. Install instructions in the script's header and in a new docs/getting-started.md FAQ entry. Typical install: `cp scripts/statusline.sh ~/.agent0/statusline.sh` then add `statusLine.command: ~/.agent0/statusline.sh` to Claude Code's settings.json. One-time setup per machine; works across all framework-adopted projects.
+
+- Addresses the 'I have multiple chats going and don't want to type /version in each one' friction. Status line is passive, continuous, and visible — flip to a chat, see the version immediately.
+
+
 ## 2026-05-20a
 
 - Strengthened the 'Link MD files in chat output' hard rule in .github/AGENTS.md to fix two real problems surfaced in testing.

@@ -371,6 +371,49 @@ Heuristics:
 
 If you can't decide, run `/cover --discover` — the agent scans your codebase and proposes feature boundaries, and you confirm or edit them before any files are written.
 
+### How do I see what framework version I'm using without typing `/version` in every chat?
+
+Use Claude Code's **status line**. The framework ships a small script at `scripts/statusline.sh` that prints the current project's framework version (and mode, if solo) — wire it into Claude Code's status line config once per machine and every session shows the version at the bottom passively.
+
+**One-time install:**
+
+```bash
+# 1. Copy the script somewhere stable
+mkdir -p ~/.agent0
+cp scripts/statusline.sh ~/.agent0/statusline.sh
+chmod +x ~/.agent0/statusline.sh
+```
+
+```jsonc
+// 2. Add to Claude Code's settings.json (~/.claude/settings.json)
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.agent0/statusline.sh"
+  }
+}
+```
+
+Restart Claude Code. From now on, every session in a framework-adopted project shows a line like:
+
+```
+Agent0 v2026-05-20b (solo)
+```
+
+or
+
+```
+Agent0 v2026-05-20b
+```
+
+at the bottom of the screen. Solo mode is annotated; review (the default) is implied.
+
+**For non-adopted projects**, the script prints nothing — the status line stays clean. Safe to install globally.
+
+**The script walks up to the main tree** via `git rev-parse --git-common-dir`, so it works correctly whether your session is in the main tree or a worktree. The version it shows is whatever's in `.github/.framework-version`.
+
+When you want detail beyond "what version" (changelog, gap to remote, command list), run `/version` in the session you care about. The status line is the passive at-a-glance; `/version` is the detailed check.
+
 ### I clicked a file link in chat and got "File could not be read. It may have been deleted or moved, or it lives outside the session folder."
 
 You're in a worktree session, and the link's path resolves to a file inside the worktree — but the file actually lives in the main tree (knowledge artifacts always do). Claude Code's preview is scoped to the session folder, so it can't reach the file.
