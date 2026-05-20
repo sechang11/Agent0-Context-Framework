@@ -7,6 +7,19 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-20a
+
+- Strengthened the 'Link MD files in chat output' hard rule in .github/AGENTS.md to fix two real problems surfaced in testing.
+
+- (a) Continuous linking. While the orchestrator is actively working on a particular .md artifact (writing a spec, iterating on a verification.md, drafting a theme, investigating a bug report), it now includes a 'Working on:' link to that artifact in EVERY response about the work — not just at the end of the command. The link becomes a persistent context indicator the user can click at any point.
+
+- (b) Absolute paths for previewability. The earlier rule said 'use Markdown link syntax,' but project-relative paths fail to preview when the orchestrator's session is in a worktree and the file lives in the main tree (the error message: 'File could not be read. It may have been deleted or moved, or it lives outside the session folder'). Knowledge artifacts always live in the main tree, so a worktree-relative link can't reach them. The orchestrator now resolves the main tree's absolute path via `git rev-parse --git-common-dir | xargs dirname` and uses THAT in link targets. The display label can stay readable as a relative-style path — only the URL target needs to be absolute.
+
+- Use the absolute path by default unless the orchestrator has explicitly verified it's already in the main tree. Solo mode (recommended for solo projects) sidesteps the problem entirely — the session and files share one tree, so all paths preview cleanly.
+
+- Added a new FAQ entry to docs/getting-started.md explaining the 'File could not be read' error and how to fix it (switch to solo mode, or expect absolute paths in links). /help inherits.
+
+
 ## 2026-05-20
 
 - Added /feature-tree — regenerates FEATURE_TREE.md at the repo root, a glanceable table of contents of every feature in the project. Each feature gets: type (spec/contract vs cover/snapshot), 1-2 sentence summary extracted from requirements.md or verification.md, verification status (passing/failing/pending/not-yet-run with last-run timestamp), and clickable Markdown links to all of the feature's files. Aggregate stats at the top: total features, count by type, count by status.

@@ -371,6 +371,17 @@ Heuristics:
 
 If you can't decide, run `/cover --discover` — the agent scans your codebase and proposes feature boundaries, and you confirm or edit them before any files are written.
 
+### I clicked a file link in chat and got "File could not be read. It may have been deleted or moved, or it lives outside the session folder."
+
+You're in a worktree session, and the link's path resolves to a file inside the worktree — but the file actually lives in the main tree (knowledge artifacts always do). Claude Code's preview is scoped to the session folder, so it can't reach the file.
+
+Two fixes, in order of preference:
+
+1. **Switch to solo mode.** `/mode solo`. The session and the files now share one tree — links preview cleanly. Recommended for solo projects.
+2. **Make the orchestrator emit absolute paths.** The framework's "Link MD files in chat output" rule (`.github/AGENTS.md`) requires links to use absolute paths resolved from the main tree, so they preview regardless of session cwd. If you're seeing relative paths in chat that fail to preview, that's a rule violation — the orchestrator should be using `git rev-parse --git-common-dir | xargs dirname` to compute the main tree's absolute path and using THAT in the link target. Mentioning the error to Claude usually prompts it to re-emit with absolute paths.
+
+The link's display label can stay readable (e.g. `[.github/specs/auth/verification.md]`) — only the URL target needs to be absolute.
+
 ### Where do my files actually land — main tree or worktree?
 
 Honest answer: this depends on your mode.
