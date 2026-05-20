@@ -437,6 +437,23 @@ If you've been telling Claude "write to the real files" in every conversation, y
 
 The "main tree" or "repo root" the orchestrator writes to is your actual project directory, resolved via `git rev-parse --git-common-dir | xargs dirname` — not the worktree's `pwd`. So even in `review` mode, knowledge-artifact paths like `.github/specs/auth-flow/verification.md` always refer to the file in your actual project.
 
+### When I switch to solo mode, does it migrate files from worktrees to the main tree?
+
+**Knowledge artifacts: nothing to migrate.** Specs, verifications, bug reports, themes, `PROGRESS_REPORT.md`, `NEXT_STEPS.md`, `FEATURE_TREE.md`, `.framework-version` — these have **always** been written to the main tree, regardless of mode (the rule from `2026-05-19`). Switching modes doesn't move them because they were never in any worktree to begin with.
+
+**Code changes: depends on the case.**
+
+- **Starting a new conversation in a project already in solo mode** — no worktree is used. New code writes go straight to main. Clean.
+
+- **Switching to solo mid-session via `/mode solo`** — any **existing** worktree contents (uncommitted code, unmerged commits from earlier review-mode work) stay where they are. The mode switch only changes how the orchestrator routes FUTURE writes. The worktree directories don't auto-merge.
+
+If you switch mid-session and there's outstanding worktree work, `/mode solo` will detect it via `git worktree list` and warn before flipping. You'll have the choice to:
+
+1. Cancel the mode switch, clean up the worktrees first (commit + merge or discard), then re-run `/mode solo`.
+2. Proceed anyway, accepting the orphaning. The old worktree directories remain on disk; future writes go to main; you handle the worktrees manually whenever.
+
+If there are no active worktrees, the switch is silent — the warning only fires when there's actually something to lose.
+
 ### Can I skip the worktree review step for solo projects?
 
 Yes — Agent0 supports a per-project `solo` mode. Switch via:

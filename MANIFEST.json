@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-20b",
+  "version": "2026-05-20c",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -101,6 +101,16 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-20c",
+      "notes": [
+        "Updated /mode solo to check for outstanding worktree work before flipping. Previously the command just confirmed the philosophical tradeoff and wrote .github/.agent0-mode. That left a gap: if the user had uncommitted code or unmerged commits in active worktrees from prior review-mode work, switching to solo orphaned those changes — future writes went to main, but the worktree contents didn't move.",
+        "Now Phase 2a runs `git worktree list` and checks each non-main worktree for uncommitted files (`git status --short`) and unpushed commits (`git log @{upstream}..HEAD`). If anything outstanding is found, the user gets a clear preview of what would be orphaned and three choices: cancel (recommended — clean up first), proceed (accept the orphaning), or fold the mode-switch into a workflow that handles each worktree manually.",
+        "If no active worktrees exist (or only the main one is listed), the check is silent — no warning fires when there's nothing to lose.",
+        "Clarified in docs/getting-started.md FAQ: knowledge artifacts never move on a mode switch (they were always in main), only code changes are at risk if there's outstanding worktree work. /help inherits.",
+        "No behavior change to /mode review — switching back to review just deletes the marker file; review is the default so no file is needed to express it."
+      ]
+    },
     {
       "version": "2026-05-20b",
       "notes": [

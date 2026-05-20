@@ -7,6 +7,19 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-20c
+
+- Updated /mode solo to check for outstanding worktree work before flipping. Previously the command just confirmed the philosophical tradeoff and wrote .github/.agent0-mode. That left a gap: if the user had uncommitted code or unmerged commits in active worktrees from prior review-mode work, switching to solo orphaned those changes — future writes went to main, but the worktree contents didn't move.
+
+- Now Phase 2a runs `git worktree list` and checks each non-main worktree for uncommitted files (`git status --short`) and unpushed commits (`git log @{upstream}..HEAD`). If anything outstanding is found, the user gets a clear preview of what would be orphaned and three choices: cancel (recommended — clean up first), proceed (accept the orphaning), or fold the mode-switch into a workflow that handles each worktree manually.
+
+- If no active worktrees exist (or only the main one is listed), the check is silent — no warning fires when there's nothing to lose.
+
+- Clarified in docs/getting-started.md FAQ: knowledge artifacts never move on a mode switch (they were always in main), only code changes are at risk if there's outstanding worktree work. /help inherits.
+
+- No behavior change to /mode review — switching back to review just deletes the marker file; review is the default so no file is needed to express it.
+
+
 ## 2026-05-20b
 
 - Added scripts/statusline.sh — a small bash script that prints the project's current framework version (and mode if solo) to stdout. Designed to be invoked by Claude Code's `statusLine.command` setting so the framework version is visible at the bottom of every chat session, without typing /version. Walks up to the main tree via `git rev-parse --git-common-dir` so it works from any worktree.
