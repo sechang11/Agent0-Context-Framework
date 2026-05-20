@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-20c",
+  "version": "2026-05-20d",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -101,6 +101,15 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-20d",
+      "notes": [
+        "Added a hard rule to .github/AGENTS.md: 'Prefer separate Bash tool calls over chained commands.' Claude Code's permission matcher checks the full literal Bash command string against the user's allow list — `cd foo && pnpm lint` matches no rule, even though `cd:*` and `pnpm lint:*` are both individually allowed. The compound prompts; separate calls don't.",
+        "The rule directs the orchestrator to run read-only diagnostic work (status checks, log inspections, listing directories, version queries) as separate Bash calls instead of chaining with `&&`, `;`, or `|`. Token overhead is real but small (~300-500 extra tokens per former chain) compared to the user-facing friction of clicking 'Allow Once' on every novel compound.",
+        "Reserved chaining cases: operations that must be atomic (mkdir foo && cd foo), shell-pipeline operations where the pipe is essential (grep X file | head -3), and build/test pipelines where the chain is the natural form (pnpm build && pnpm test). For other cases, the orchestrator runs each command independently.",
+        "No effect on what gets done — just on how the commands are invoked. Eliminates a common source of permission-prompt friction without changing capabilities."
+      ]
+    },
     {
       "version": "2026-05-20c",
       "notes": [

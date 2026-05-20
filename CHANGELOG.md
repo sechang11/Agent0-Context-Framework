@@ -7,6 +7,17 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-20d
+
+- Added a hard rule to .github/AGENTS.md: 'Prefer separate Bash tool calls over chained commands.' Claude Code's permission matcher checks the full literal Bash command string against the user's allow list — `cd foo && pnpm lint` matches no rule, even though `cd:*` and `pnpm lint:*` are both individually allowed. The compound prompts; separate calls don't.
+
+- The rule directs the orchestrator to run read-only diagnostic work (status checks, log inspections, listing directories, version queries) as separate Bash calls instead of chaining with `&&`, `;`, or `|`. Token overhead is real but small (~300-500 extra tokens per former chain) compared to the user-facing friction of clicking 'Allow Once' on every novel compound.
+
+- Reserved chaining cases: operations that must be atomic (mkdir foo && cd foo), shell-pipeline operations where the pipe is essential (grep X file | head -3), and build/test pipelines where the chain is the natural form (pnpm build && pnpm test). For other cases, the orchestrator runs each command independently.
+
+- No effect on what gets done — just on how the commands are invoked. Eliminates a common source of permission-prompt friction without changing capabilities.
+
+
 ## 2026-05-20c
 
 - Updated /mode solo to check for outstanding worktree work before flipping. Previously the command just confirmed the philosophical tradeoff and wrote .github/.agent0-mode. That left a gap: if the user had uncommitted code or unmerged commits in active worktrees from prior review-mode work, switching to solo orphaned those changes — future writes went to main, but the worktree contents didn't move.
