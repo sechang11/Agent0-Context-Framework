@@ -7,6 +7,15 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-20e
+
+- Reversed the 'prefer separate Bash tool calls' rule from 2026-05-20d. User correctly identified that the token cost of separate calls is PERMANENT and ACCUMULATES across every subsequent turn's context window (Anthropic's prompt cache softens it but doesn't eliminate it), while the prompt cost of a chained compound is one-time and self-eliminating via 'Allow Always.' On a long session with several chained operations per turn, the cumulative context burn is non-trivial (5-15% extra) — directly competes with the context window budget. Worse, the narrative interstitials between separate calls ('now let me check...') compound further.
+
+- New rule: chain when natural; split only when there's a specific operational reason (need to see one result before deciding the next, isolate possible failure, user explicitly asked). Trust the user to manage their own permission allowlist via Allow Always. Most repeated compounds get whitelisted in a click and stop prompting; the steady state is chain-freely-no-prompts, not separate-forever.
+
+- This is a self-correction in response to a real critique. Token economics in long sessions matter more than I initially weighted them.
+
+
 ## 2026-05-20d
 
 - Added a hard rule to .github/AGENTS.md: 'Prefer separate Bash tool calls over chained commands.' Claude Code's permission matcher checks the full literal Bash command string against the user's allow list — `cd foo && pnpm lint` matches no rule, even though `cd:*` and `pnpm lint:*` are both individually allowed. The compound prompts; separate calls don't.

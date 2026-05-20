@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-20d",
+  "version": "2026-05-20e",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -101,6 +101,14 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-20e",
+      "notes": [
+        "Reversed the 'prefer separate Bash tool calls' rule from 2026-05-20d. User correctly identified that the token cost of separate calls is PERMANENT and ACCUMULATES across every subsequent turn's context window (Anthropic's prompt cache softens it but doesn't eliminate it), while the prompt cost of a chained compound is one-time and self-eliminating via 'Allow Always.' On a long session with several chained operations per turn, the cumulative context burn is non-trivial (5-15% extra) — directly competes with the context window budget. Worse, the narrative interstitials between separate calls ('now let me check...') compound further.",
+        "New rule: chain when natural; split only when there's a specific operational reason (need to see one result before deciding the next, isolate possible failure, user explicitly asked). Trust the user to manage their own permission allowlist via Allow Always. Most repeated compounds get whitelisted in a click and stop prompting; the steady state is chain-freely-no-prompts, not separate-forever.",
+        "This is a self-correction in response to a real critique. Token economics in long sessions matter more than I initially weighted them."
+      ]
+    },
     {
       "version": "2026-05-20d",
       "notes": [
