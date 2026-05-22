@@ -397,16 +397,16 @@ chmod +x ~/.agent0/statusline.sh
 Restart Claude Code. From now on, every session in a framework-adopted project shows a line like:
 
 ```
-Agent0 v2026-05-20b (solo)
+Agent0 v2026-05-21b (solo)
 ```
 
 or
 
 ```
-Agent0 v2026-05-20b
+Agent0 v2026-05-21b (review)
 ```
 
-at the bottom of the screen. Solo mode is annotated; review (the default) is implied.
+at the bottom of the screen. Both modes are shown explicitly so the line is never ambiguous.
 
 **For non-adopted projects**, the script prints nothing — the status line stays clean. Safe to install globally.
 

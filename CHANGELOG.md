@@ -7,6 +7,15 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-21b
+
+- Status-line script now always shows the mode explicitly. Previously: solo-mode projects showed `Agent0 v{version} (solo)`, review-mode projects showed just `Agent0 v{version}` with review-as-implied. New behavior: review-mode projects show `Agent0 v{version} (review)` — both modes annotated, no implied state, no ambiguity.
+
+- User-facing change is small (one extra `(review)` tag in the status line when the project is in default mode) but eliminates the 'is this project in solo or review?' guess that the implied-default required.
+
+- Updated scripts/statusline.sh + docs/getting-started.md FAQ examples to reflect the new format. Users who already have ~/.agent0/statusline.sh installed need to re-copy the script (or run /update-framework then re-copy) to pick up the change.
+
+
 ## 2026-05-21a
 
 - Added .github/instructions/style.instructions.md — the 'drift register.' A project-specific file that captures concrete style/lint rules agents have drifted on, written specifically enough that the next agent avoids the trap. Different from architecture.instructions.md (system invariants) and testing.instructions.md (test standards) — this is the long tail of strict-mode lint rules (prefer-nullish-coalescing, array-type, consistent-type-imports, etc.) that bite per-push without being load-bearing architecturally.

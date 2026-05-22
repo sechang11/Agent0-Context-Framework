@@ -9,7 +9,7 @@
 #
 # Output formats:
 #   Agent0 v2026-05-20a (solo)       # framework adopted, solo mode
-#   Agent0 v2026-05-20a               # framework adopted, review mode (default)
+#   Agent0 v2026-05-20a (review)     # framework adopted, review mode (default — also shown explicitly)
 #   (empty)                            # project not adopted, or not in a git repo
 #
 # Non-adopted projects and non-git directories print nothing — the
@@ -59,15 +59,14 @@ mode_file="$main_tree/.github/.agent0-mode"
 version=$(head -1 "$version_file" 2>/dev/null | tr -d '[:space:]')
 [[ -z "$version" ]] && exit 0
 
-output="Agent0 v${version}"
-
-# Append the mode if it's set to something non-default (solo).
-# Review is the default; don't clutter the status line with it.
+# Determine mode: solo if marker file says so, otherwise review (the default).
+# Always display the mode explicitly so it's never ambiguous.
+mode="review"
 if [[ -f "$mode_file" ]]; then
-    mode=$(head -1 "$mode_file" 2>/dev/null | tr -d '[:space:]')
-    if [[ -n "$mode" && "$mode" != "review" ]]; then
-        output="${output} (${mode})"
+    file_mode=$(head -1 "$mode_file" 2>/dev/null | tr -d '[:space:]')
+    if [[ -n "$file_mode" ]]; then
+        mode="$file_mode"
     fi
 fi
 
-echo "$output"
+echo "Agent0 v${version} (${mode})"
