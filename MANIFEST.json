@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-05-20e",
+  "version": "2026-05-21",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -57,6 +57,7 @@
     { "path": ".github/themes/bold-tech/THEME.md",          "class": "additive" },
     { "path": "CHANGELOG.md",                               "class": "additive" },
     { "path": "docs/getting-started.md",                    "class": "additive" },
+    { "path": "docs/workflow-guide.md",                     "class": "additive" },
     { "path": "scripts/statusline.sh",                      "class": "additive" },
 
     { "path": ".claude/agents/architect.md",                  "class": "additive" },
@@ -101,6 +102,14 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-05-21",
+      "notes": [
+        "Added docs/workflow-guide.md — the lifecycle-oriented how-to-use guide the framework needed. Distinct from getting-started.md (which is reference: what each thing is, where files live), the workflow guide is opinionated lifecycle: what to do, when, in what order, and why. Covers: the five categories of work, first-30-minutes setup, daily rhythm, weekly rhythm, a full feature lifecycle example (password-reset, end to end with every step), common workflows by goal, anti-patterns to avoid, signs you're getting the most out of the framework, and an honest 'what's missing' section with proposed additions.",
+        "Distributed via the manifest as additive — adopted projects get a local copy via /update-framework. Linked from docs/README.md and docs/getting-started.md.",
+        "The 'what's missing' section calls out real gaps the framework has surfaced through use: no /morning or /since-last-visit startup commands, no /build-feature orchestrator, no /tutorial walkthrough for newbies, underused @code-reviewer/@security-reviewer in daily flow, Stage 3 web debug panel unproven in real projects, theme cross-project sharing untested, template-class updates don't propagate. These are explicit todos, not hidden issues."
+      ]
+    },
     {
       "version": "2026-05-20e",
       "notes": [

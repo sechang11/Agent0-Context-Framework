@@ -584,6 +584,7 @@ No. MIT license. The slash commands and agents use whatever AI tool you've alrea
 
 | Document | What's in it |
 |---|---|
+| [`workflow-guide.md`](./workflow-guide.md) | **How to actually use the framework day-to-day** — lifecycle, daily rhythm, full feature lifecycle example, anti-patterns, gaps |
 | [`../README.md`](../README.md) | Top-level overview of the framework |
 | [`../CUSTOMIZATION.md`](../CUSTOMIZATION.md) | Tier-by-tier adoption (Minimum / Standard / Full) — what to keep, what to delete |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Release history |

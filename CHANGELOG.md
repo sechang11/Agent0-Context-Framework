@@ -7,6 +7,15 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-21
+
+- Added docs/workflow-guide.md — the lifecycle-oriented how-to-use guide the framework needed. Distinct from getting-started.md (which is reference: what each thing is, where files live), the workflow guide is opinionated lifecycle: what to do, when, in what order, and why. Covers: the five categories of work, first-30-minutes setup, daily rhythm, weekly rhythm, a full feature lifecycle example (password-reset, end to end with every step), common workflows by goal, anti-patterns to avoid, signs you're getting the most out of the framework, and an honest 'what's missing' section with proposed additions.
+
+- Distributed via the manifest as additive — adopted projects get a local copy via /update-framework. Linked from docs/README.md and docs/getting-started.md.
+
+- The 'what's missing' section calls out real gaps the framework has surfaced through use: no /morning or /since-last-visit startup commands, no /build-feature orchestrator, no /tutorial walkthrough for newbies, underused @code-reviewer/@security-reviewer in daily flow, Stage 3 web debug panel unproven in real projects, theme cross-project sharing untested, template-class updates don't propagate. These are explicit todos, not hidden issues.
+
+
 ## 2026-05-20e
 
 - Reversed the 'prefer separate Bash tool calls' rule from 2026-05-20d. User correctly identified that the token cost of separate calls is PERMANENT and ACCUMULATES across every subsequent turn's context window (Anthropic's prompt cache softens it but doesn't eliminate it), while the prompt cost of a chained compound is one-time and self-eliminating via 'Allow Always.' On a long session with several chained operations per turn, the cumulative context burn is non-trivial (5-15% extra) — directly competes with the context window budget. Worse, the narrative interstitials between separate calls ('now let me check...') compound further.
