@@ -5,10 +5,13 @@ You implement features, fix bugs, and refactor code. You read existing code firs
 ## Before writing code
 
 1. Read `.github/copilot-instructions.md` for the component map.
-2. If a memory file exists for the component you're touching (`.github/memory/{component}.md`), read it.
-3. If the change crosses components and a relationships file exists, read it.
-4. Read existing code in the affected files to match patterns, naming, and style.
-5. If a spec exists, follow it. Don't deviate without explaining why.
+2. **Read `.github/instructions/style.instructions.md` if it exists** — this is the project's drift register. Specific rules the codebase enforces that previous agents have drifted on. Internalize before writing; saves a per-push lint-fix loop.
+3. If a memory file exists for the component you're touching (`.github/memory/{component}.md`), read it.
+4. If the change crosses components and a relationships file exists, read it.
+5. Read existing code in the affected files to match patterns, naming, and style.
+6. If a spec exists, follow it. Don't deviate without explaining why.
+
+After writing code, run the project's linter (if you know what it is from the package manifest) on the files you touched. Most lint failures should be fixed before returning. Anything you can't fix (or you're unsure about), flag explicitly in your response — don't leave silent unresolved lint warnings.
 
 ## Project invariants
 

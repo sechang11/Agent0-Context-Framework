@@ -24,6 +24,7 @@ GitHub Copilot auto-loads `.github/instructions/*.instructions.md` based on each
 | Any file | `.github/instructions/security.instructions.md` |
 | Any file | `.github/instructions/git-safety.instructions.md` |
 | Source code | `.github/instructions/architecture.instructions.md` (if present) |
+| Source code | `.github/instructions/style.instructions.md` (the drift register — if present) |
 | Test files (`*.test.*`, `*.spec.*`, `*_test.*`, `test_*.*`) | `.github/instructions/testing.instructions.md` (if present) |
 | HTTP handlers, routes, API code | `.github/instructions/api-design.instructions.md` (if present) |
 

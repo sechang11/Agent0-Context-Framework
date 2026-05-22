@@ -7,6 +7,21 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-21a
+
+- Added .github/instructions/style.instructions.md — the 'drift register.' A project-specific file that captures concrete style/lint rules agents have drifted on, written specifically enough that the next agent avoids the trap. Different from architecture.instructions.md (system invariants) and testing.instructions.md (test standards) — this is the long tail of strict-mode lint rules (prefer-nullish-coalescing, array-type, consistent-type-imports, etc.) that bite per-push without being load-bearing architecturally.
+
+- Template includes a 'how to maintain this file' section: when a push fails a lint rule, add a row with the rule name, what the agent did wrong, what to do instead, and an example. Goal: the register becomes the project's accumulated 'lessons we keep learning' — and stops being one we keep relearning.
+
+- Updated CLAUDE.md glob → instructions map to include the new file ('Source code' rows now load both architecture.instructions.md and style.instructions.md when editing source files).
+
+- Updated software-engineer.agent.md to read style.instructions.md as step 2 of 'Before writing code' (before sibling-file inspection — drift register first, established patterns second). Also added a post-write step: run the project's linter on touched files if known, and flag anything unresolved instead of returning silently.
+
+- Distributed as 'template' class — adopted projects get the file via /update-framework (since it's a new file that doesn't exist locally), then fill in their own drift register. Existing software-engineer.agent.md files in adopted projects WON'T pick up the new pre-write step automatically because they're also template class — known framework gap (template-class updates don't propagate). For adopted projects: manually copy the 'Before writing code' update from this version, or re-run /adopt-framework.
+
+- Phase A of the multi-agent style-drift mitigation discussed in the workflow guide. Phase B (a /conform slash command that runs lint --fix + typecheck + reports remaining issues) is the natural follow-up if Phase A's drift register isn't enough on its own.
+
+
 ## 2026-05-21
 
 - Added docs/workflow-guide.md — the lifecycle-oriented how-to-use guide the framework needed. Distinct from getting-started.md (which is reference: what each thing is, where files live), the workflow guide is opinionated lifecycle: what to do, when, in what order, and why. Covers: the five categories of work, first-30-minutes setup, daily rhythm, weekly rhythm, a full feature lifecycle example (password-reset, end to end with every step), common workflows by goal, anti-patterns to avoid, signs you're getting the most out of the framework, and an honest 'what's missing' section with proposed additions.
