@@ -7,6 +7,21 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-05-22
+
+- /feature-tree expanded from feature-index to full project index. The regenerated FEATURE_TREE.md now covers: features (as before, with type/summary/status/file-links), bugs (grouped by open/in-progress/resolved-collapsed), themes (with mood + adoption marker), latest reports (PROGRESS_REPORT.md + NEXT_STEPS.md with freshness timestamps), and framework state (version + mode). Single-file TOC for everything the framework knows about the project.
+
+- Each section only renders if it has content — projects with no bugs don't get an empty Bugs heading. Projects with no themes don't get an empty Themes heading. Reports section shows what's missing (with the command to generate it) rather than just omitting.
+
+- Header summary line gives at-a-glance counts: framework version + mode, feature count by type, open bug count, theme count with adopted, last-report timestamps.
+
+- Console summary after regeneration also expanded to show counts across all categories — not just features.
+
+- Prompt + shim updated. File name stays FEATURE_TREE.md for backward compatibility (it's the right name even though it now covers more than features — the tree IS the project structure).
+
+- Adopted projects pull the updated /feature-tree prompt via /update-framework. Their existing FEATURE_TREE.md files get the expanded format on next regen (which happens automatically after the next /spec, /cover, /verify, or manual /feature-tree).
+
+
 ## 2026-05-21b
 
 - Status-line script now always shows the mode explicitly. Previously: solo-mode projects showed `Agent0 v{version} (solo)`, review-mode projects showed just `Agent0 v{version}` with review-as-implied. New behavior: review-mode projects show `Agent0 v{version} (review)` — both modes annotated, no implied state, no ambiguity.
