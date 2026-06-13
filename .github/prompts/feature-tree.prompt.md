@@ -1,11 +1,18 @@
 ---
 mode: agent
-description: Regenerate FEATURE_TREE.md at the repo root — a comprehensive table-of-contents of every knowledge artifact in the project (features, bugs, themes, latest reports), with type, short summary, status, and clickable links. Agent-driven; no script.
+description: Regenerate FEATURE_TREE.md AND FEATURE_TREE.json at the repo root — a comprehensive table-of-contents of every knowledge artifact in the project (features, bugs, themes, latest reports), plus a machine-readable graph projection that the feature canvas (canvas.html) renders. One walk, two projections. Agent-driven; no script.
 ---
 
 # /feature-tree
 
-Regenerate `FEATURE_TREE.md` at the **main tree's** repo root (resolve via `git rev-parse --path-format=absolute --git-common-dir | xargs dirname` — see `.github/AGENTS.md` → "Knowledge artifacts and worktrees"). The file is a comprehensive project index covering:
+Regenerate two files at the **main tree's** repo root (resolve via `git rev-parse --path-format=absolute --git-common-dir | xargs dirname` — see `.github/AGENTS.md` → "Knowledge artifacts and worktrees"):
+
+- **`FEATURE_TREE.md`** — the human/agent-readable index (below).
+- **`FEATURE_TREE.json`** — a machine-readable graph projection of the same data, rendered by the feature canvas (`canvas.html`). Conforms to `.github/schemas/feature-tree.schema.json`. See `docs/feature-canvas.md`.
+
+Both are produced from a **single walk** over the project. The Markdown is for reading; the JSON is for rendering. Compose them together so they never drift.
+
+The Markdown index covers:
 
 - **Features** — every directory under `.github/specs/` with type (spec/cover), 1–2 sentence summary, verification status, and clickable file links.
 - **Bugs** — every report under `.github/bugs/` grouped by status (open / in-progress / resolved).
@@ -34,10 +41,11 @@ This is one of two ways the file gets updated:
    ```bash
    MAIN_TREE=$(git rev-parse --path-format=absolute --git-common-dir | xargs dirname)
    ```
-2. The target file is `${MAIN_TREE}/FEATURE_TREE.md`.
+2. The target files are `${MAIN_TREE}/FEATURE_TREE.md` and `${MAIN_TREE}/FEATURE_TREE.json`.
 3. The specs directory is `${MAIN_TREE}/.github/specs/`.
+4. The rooms registry (optional) is `${MAIN_TREE}/.github/specs/_rooms.yml`. Read it if present — it enriches rooms with title/icon/order/summary. If absent, rooms are derived from the distinct `room` values across features.
 
-If `${MAIN_TREE}/.github/specs/` doesn't exist (project has no features yet), write a minimal placeholder file (see Phase 4) and exit cleanly.
+If `${MAIN_TREE}/.github/specs/` doesn't exist (project has no features yet), write minimal placeholder files for both (see Phase 4) and exit cleanly.
 
 ## Phase 2 — Walk every feature directory
 
@@ -56,7 +64,27 @@ For each directory under `${MAIN_TREE}/.github/specs/` (excluding `_template/`, 
 4. Read the first paragraph of `requirements.md` (if present) OR the philosophy section / first paragraph of `verification.md` to extract a 1–2 sentence summary. Stop at the first blank line. Strip Markdown formatting for the summary.
 5. If neither file exists, the directory is incomplete — note as "scaffolded but no content yet" and move on.
 
+### Phase 2a — gather the extra fields the JSON needs
+
+The Markdown index only needs steps 1–5. The JSON graph (Phase 3b) needs a bit more per feature. Gather it in the same pass — it's all cheap frontmatter/section reads:
+
+- **Topology** — read the topology frontmatter from `verification.md` first, then `requirements.md` as a fallback (verification.md wins on conflict; merge missing keys from requirements.md). Keys: `id` (default: dir name), `kind` (default: `feature`), `room` (default: null/ungrouped), `depends_on` (default: `[]`), `title` (default: titleized id), `summary` (default: the step-4 summary).
+- **Detail** (the "full version") — first paragraph of `design.md` `## Approach`. If no `design.md`, fall back to the first paragraph of `verification.md`'s body (after any caveat block), else reuse the summary.
+- **Checkpoints** — from `verification.md` `## Checkpoints`, each `### CP-N: {label}` block. Capture `Type`, `Surface`, and normalize `Last result` to a state: `pass` / `fail` / `skip` / `not-run` (from "not yet run") / `pending` (collapse "pending: needs X", keep the X as `pendingReason`). Count `passing` (state == pass) and `total`.
+- **Todo board** — from `tasks.md`, parse checkbox state per task line: `- [x]` → `done`, `- [~]` → `doing`, `- [ ]` → `next`. Strip the `**[component]**` prefix from the label. Legacy numbered tasks (`1. ...` with no checkbox) all count as `next`. Empty/absent file → empty board.
+- **Surfaces** — the bullet list under `verification.md` `## Surfaces`, verbatim (one string per bullet).
+- **Node status** (derived, see "Node status" below).
+
 Process in alphabetical order by feature name.
+
+### Node status
+
+Derive each node's `status` (used by the canvas) with this precedence — stop at the first match:
+
+1. **verified** — verification.md `status: passing`.
+2. **in-progress** — verification.md status is `failing` / `partial` / `pending`, OR `tasks.md` has any `- [~]`, OR tasks.md has a mix of `[x]` and `[ ]`.
+3. **built** — all tasks are `- [x]` done (and at least one exists) with no passing verification yet, OR verification.md status is `draft` / `ready`.
+4. **planned** — none of the above (scaffolded, or spec'd but not built).
 
 ## Phase 2b — Walk bugs, themes, reports
 
@@ -176,6 +204,27 @@ The header section shows aggregate stats. Each section appears only if it has co
 
 For features that are scaffolded but have no content: still list them, with `**Type:** scaffolded` and summary "_No content yet. Create requirements.md (and run `/verify --bootstrap`) or run `/cover` to populate._"
 
+## Phase 3b — Compose and write `FEATURE_TREE.json`
+
+From the **same** gathered data (Phase 2 + 2a), compose the graph JSON and write it to `${MAIN_TREE}/FEATURE_TREE.json`. It must conform to `.github/schemas/feature-tree.schema.json`. `FEATURE_TREE.example.json` at the repo root is a complete worked example — match its shape exactly.
+
+Top-level keys:
+
+- `version`: `"1"`.
+- `generated`: the same `{YYYY-MM-DD HH:MM}` timestamp as the Markdown.
+- `framework`: `{ "version": {installed_version}, "mode": {mode} }`.
+- `rooms`: one entry per room. Start from `_rooms.yml` (if present) for title/icon/order/summary. Then ensure every distinct `room` value referenced by a feature exists — auto-create missing ones with `title` = titleized id and no icon. Don't emit a room that has no features and isn't in `_rooms.yml`.
+- `nodes`: one entry per feature directory (Phase 2/2a). Map fields straight across: `id`, `kind`, `room` (null if ungrouped), `title`, `summary`, `detail`, `status`, `surfaces`, `dependsOn` (from `depends_on`), `todo`, and `artifacts`.
+  - `verification`: `null` if no `verification.md`. Otherwise `{ source, statusRaw, lastVerified, passing, total, checkpoints[] }` where each checkpoint is `{ id, label, type, surface, state, pendingReason? }`.
+  - `artifacts`: `{ "spec": "{ABS path to .github/specs/{id}/}", "files": { role: "{ABS path}" } }` — include only files that exist, keyed by role (`requirements`, `design`, `tasks`, `verification`, `ui`). Use absolute paths under `${MAIN_TREE}` (same rule as Markdown links — so Claude Code and the canvas can open them).
+- `edges`: flatten every node's `dependsOn` into `{ "from": node.id, "to": dep, "type": "depends-on" }`. Skip edges whose `to` isn't a known node id, but keep the id in the node's `dependsOn` (a dangling dependency is still information).
+- `bugs`: the open/in-progress bugs from Phase 2b as `{ id, title, status, node }`. Set `node` only if a bug clearly references a feature (e.g. its title or a `feature:` field names one); otherwise `null`. Omit resolved bugs.
+- `stats`: `{ features, rooms, verified, inProgress, openBugs }` computed from the nodes/bugs.
+
+Emit **valid JSON** — double-quoted keys, no trailing commas, no comments. Escape strings properly. Keep summaries/details to one line each (collapse newlines to spaces). When in doubt about a field's shape, copy the example.
+
+Like the Markdown, this file is **regenerated, not edited** — always overwrite. `--check` describes the JSON diff without writing; `--verbose` may print the node count but not the full JSON (it's large).
+
 ## Phase 4 — Edge cases
 
 ### Empty project (no `.github/specs/` directory)
@@ -196,7 +245,9 @@ This project has no features yet. Get started:
 - `/cover --discover` to scan the codebase and propose feature boundaries.
 ```
 
-If bugs / themes / reports exist but features don't, still emit those sections (they're independent of features).
+Also write a minimal `FEATURE_TREE.json`: `{ "version": "1", "generated": "{timestamp}", "framework": { "version": "{version}", "mode": "{mode}" }, "rooms": [], "nodes": [], "edges": [], "bugs": [], "stats": { "features": 0, "rooms": 0, "verified": 0, "inProgress": 0, "openBugs": 0 } }`. The canvas renders an empty state from it.
+
+If bugs / themes / reports exist but features don't, still emit those sections in the Markdown (they're independent of features). The JSON still has `nodes: []` but can carry `bugs`.
 
 ### Only the `_design/` or `_template/` directories present
 
@@ -231,14 +282,16 @@ After writing the file:
     ({Otherwise: "No structural changes."})
 ```
 
-**Written to:** [FEATURE_TREE.md]({absolute path to FEATURE_TREE.md})
+**Written to:** [FEATURE_TREE.md]({absolute path to FEATURE_TREE.md}) · `FEATURE_TREE.json` ({node count} nodes — view with `canvas.html`)
 
 ## Rules
 
-- **FEATURE_TREE.md is a knowledge artifact** — always written to the main tree path resolved from `git rev-parse`, never to a worktree. Per `.github/AGENTS.md` → "Knowledge artifacts and worktrees."
-- **The file is regenerated, not edited.** Always overwrite. The previous content is discarded. Don't try to preserve user edits to the file — there shouldn't be any (note at the top tells users not to).
-- **`--check` writes nothing.** Compose what would be written, diff against the existing file, report the diff. No writes.
-- **Don't fail if a feature is malformed.** Missing frontmatter, unreadable file, weird Markdown — note as "(malformed)" in the summary and continue with the rest.
+- **Both files are knowledge artifacts** — `FEATURE_TREE.md` and `FEATURE_TREE.json` are always written to the main tree path resolved from `git rev-parse`, never to a worktree. Per `.github/AGENTS.md` → "Knowledge artifacts and worktrees."
+- **Keep the two in sync.** They're composed from the same walk in one run. Never write one without the other (except `--check`, which writes neither).
+- **The files are regenerated, not edited.** Always overwrite. The previous content is discarded. Don't try to preserve user edits — there shouldn't be any.
+- **The JSON must be valid and schema-conformant.** No comments, no trailing commas, double-quoted keys. When unsure of a field's shape, copy `FEATURE_TREE.example.json`. A malformed JSON breaks the canvas — if you can't produce valid JSON for a feature, omit that node rather than emitting broken JSON, and note it in the summary.
+- **`--check` writes nothing.** Compose what would be written, diff against the existing files, report the diff for both. No writes.
+- **Don't fail if a feature is malformed.** Missing frontmatter, unreadable file, weird Markdown — note as "(malformed)" in the Markdown summary, give the JSON node sensible defaults (kind feature, ungrouped, planned), and continue with the rest.
 - **Read-only on `.github/specs/`.** Never modify a feature's files. This command only reads and emits the index.
 - **Don't commit.** Same as every other slash command.
-- **Be fast.** This command runs frequently (after `/spec`, `/cover`, `/verify`). Skip any analysis beyond "what files exist + read frontmatter + extract one summary paragraph." It's an index, not a review.
+- **Be fast.** This command runs frequently (after `/spec`, `/cover`, `/verify`). The extra JSON fields are all cheap frontmatter/section reads in the same pass — don't deep-read source code. It's an index, not a review.

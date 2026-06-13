@@ -74,7 +74,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/theme` | Browse, pick, save, apply, mix, or import design themes via the shopper showroom interaction. Operates on `.github/themes/`. Visual depth flags `--text` (default), `--swatch`, `--mockup1/2/full` |
 | `/ui-review` | Invoke `@ui-ux-engineer` to review a feature's UX — flow, adaptive design per viewport tier, theme consistency. Optional `--engagement` flag adds engagement-hacking analysis in a separate section |
 | `/mode` | Show or set framework mode. `solo` disables worktree isolation (code goes directly to main tree); `review` (default) keeps worktree isolation for code changes. Knowledge artifacts always go to main tree |
-| `/feature-tree` | Regenerate `FEATURE_TREE.md` at the repo root — table of contents of every feature with type, summary, status, and clickable file links. Auto-invoked by `/spec`, `/cover`, `/verify`; can also be run manually |
+| `/feature-tree` | Regenerate `FEATURE_TREE.md` **and** `FEATURE_TREE.json` at the repo root — a table of contents of every feature (type, summary, status, file links) plus a machine-readable graph the **feature canvas** (`canvas.html`) renders: rooms, nodes, verification checkpoints, the done/doing/next board, and `dependsOn` edges. Auto-invoked by `/spec`, `/cover`, `/verify`; can also be run manually. See `docs/feature-canvas.md` |
 
 ## Specs
 

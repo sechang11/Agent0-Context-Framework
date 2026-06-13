@@ -2,11 +2,15 @@
 
 Order the tasks so the system stays working at each step. Each task is small enough to be one PR.
 
+<!-- PROJECT: checkbox state drives the feature canvas's done/doing/next board:
+       - [ ] = next (not started)   - [~] = doing (in progress)   - [x] = done
+     Keep them ordered (still one PR per task). See docs/feature-canvas.md. -->
+
 ## Tasks
 
-1. **[<!-- component -->]** <!-- task description -->
-2. **[<!-- component -->]** <!-- task description -->
-3. (...)
+- [ ] **[<!-- component -->]** <!-- task description -->
+- [ ] **[<!-- component -->]** <!-- task description -->
+- [ ] (...)
 
 ## Test plan
 

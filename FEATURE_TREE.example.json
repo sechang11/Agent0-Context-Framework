@@ -1,0 +1,231 @@
+{
+  "$schema": ".github/schemas/feature-tree.schema.json",
+  "version": "1",
+  "generated": "2026-06-12 14:30",
+  "framework": { "version": "2026-05-22", "mode": "review" },
+  "rooms": [
+    { "id": "auth", "title": "Auth", "icon": "ti-lock", "order": 1, "summary": "Sign-in, sessions, account recovery." },
+    { "id": "checkout", "title": "Checkout", "icon": "ti-shopping-cart", "order": 2, "summary": "Cart through payment and receipts." },
+    { "id": "dashboard", "title": "Dashboard", "icon": "ti-layout-dashboard", "order": 3, "summary": "Authenticated account views and analytics." }
+  ],
+  "nodes": [
+    {
+      "id": "login-flow",
+      "kind": "feature",
+      "room": "auth",
+      "title": "Login flow",
+      "summary": "Email + OAuth sign-in with httpOnly session cookies.",
+      "detail": "Credential and Google/Apple OAuth via PKCE. Sessions are httpOnly cookies with a 14-day sliding expiry, rate-limited at 5 attempts/min per IP.",
+      "status": "verified",
+      "verification": {
+        "source": "spec",
+        "statusRaw": "passing",
+        "lastVerified": "2026-06-10 09:12",
+        "passing": 4,
+        "total": 4,
+        "checkpoints": [
+          { "id": "CP-1", "label": "Valid credentials redirect to /dashboard", "type": "automated", "surface": "POST /api/auth/login", "state": "pass" },
+          { "id": "CP-2", "label": "Bad password returns 401", "type": "automated", "surface": "POST /api/auth/login", "state": "pass" },
+          { "id": "CP-3", "label": "OAuth round-trip sets a session", "type": "mixed", "surface": "/login", "state": "pass" },
+          { "id": "CP-4", "label": "Session expires at 14 days", "type": "automated", "surface": "POST /api/auth/login", "state": "pass" }
+        ]
+      },
+      "todo": { "done": ["Email/password", "Google OAuth", "Session cookies"], "doing": [], "next": ["Magic-link login"] },
+      "surfaces": ["/login — page", "POST /api/auth/login — endpoint"],
+      "dependsOn": ["auth-schema"],
+      "artifacts": {
+        "spec": ".github/specs/login-flow/",
+        "files": { "requirements": ".github/specs/login-flow/requirements.md", "design": ".github/specs/login-flow/design.md", "tasks": ".github/specs/login-flow/tasks.md", "verification": ".github/specs/login-flow/verification.md" }
+      }
+    },
+    {
+      "id": "password-reset",
+      "kind": "feature",
+      "room": "auth",
+      "title": "Password reset",
+      "summary": "Token-based reset emailed to the user.",
+      "detail": "Single-use signed token with a 30-minute TTL, invalidated on use. Reuses the transactional email sender. Still needs lockout on repeated requests.",
+      "status": "in-progress",
+      "verification": {
+        "source": "spec",
+        "statusRaw": "pending",
+        "lastVerified": "2026-06-11 16:40",
+        "passing": 1,
+        "total": 3,
+        "checkpoints": [
+          { "id": "CP-1", "label": "Reset token emailed on request", "type": "automated", "surface": "POST /api/auth/reset", "state": "pass" },
+          { "id": "CP-2", "label": "Token expires at 30 minutes", "type": "automated", "surface": "POST /api/auth/reset", "state": "pending", "pendingReason": "needs walk-through" },
+          { "id": "CP-3", "label": "Token is single-use", "type": "automated", "surface": "POST /api/auth/reset", "state": "not-run" }
+        ]
+      },
+      "todo": { "done": ["Request endpoint", "Email template"], "doing": ["Token TTL + single-use"], "next": ["Throttle repeated requests"] },
+      "surfaces": ["/reset — page", "POST /api/auth/reset — endpoint"],
+      "dependsOn": ["auth-schema"],
+      "artifacts": {
+        "spec": ".github/specs/password-reset/",
+        "files": { "requirements": ".github/specs/password-reset/requirements.md", "design": ".github/specs/password-reset/design.md", "tasks": ".github/specs/password-reset/tasks.md", "verification": ".github/specs/password-reset/verification.md" }
+      }
+    },
+    {
+      "id": "cart",
+      "kind": "feature",
+      "room": "checkout",
+      "title": "Cart",
+      "summary": "Line items, quantities, totals in integer cents.",
+      "detail": "Server-authoritative cart keyed by session. All money is integer cents. Re-prices on every read to catch stale prices.",
+      "status": "verified",
+      "verification": {
+        "source": "spec",
+        "statusRaw": "passing",
+        "lastVerified": "2026-06-09 11:02",
+        "passing": 3,
+        "total": 3,
+        "checkpoints": [
+          { "id": "CP-1", "label": "Add and remove items", "type": "automated", "surface": "POST /api/cart", "state": "pass" },
+          { "id": "CP-2", "label": "Totals computed in integer cents", "type": "automated", "surface": "GET /api/cart", "state": "pass" },
+          { "id": "CP-3", "label": "Re-prices stale items on read", "type": "automated", "surface": "GET /api/cart", "state": "pass" }
+        ]
+      },
+      "todo": { "done": ["Add/remove", "Quantity edit", "Cents math"], "doing": [], "next": ["Saved carts"] },
+      "surfaces": ["/cart — page", "GET/POST /api/cart — endpoint"],
+      "dependsOn": ["cart-schema"],
+      "artifacts": {
+        "spec": ".github/specs/cart/",
+        "files": { "requirements": ".github/specs/cart/requirements.md", "design": ".github/specs/cart/design.md", "tasks": ".github/specs/cart/tasks.md", "verification": ".github/specs/cart/verification.md" }
+      }
+    },
+    {
+      "id": "payments",
+      "kind": "feature",
+      "room": "checkout",
+      "title": "Payments",
+      "summary": "Stripe charge + webhook reconciliation.",
+      "detail": "Card payments via Stripe PaymentIntents with idempotency keys on every charge. A webhook reconciles charge state asynchronously — client-side success is never trusted. Apple Pay is scaffolded but not wired.",
+      "status": "in-progress",
+      "verification": {
+        "source": "spec",
+        "statusRaw": "partial",
+        "lastVerified": "2026-06-12 08:55",
+        "passing": 2,
+        "total": 5,
+        "checkpoints": [
+          { "id": "CP-1", "label": "Card payment succeeds", "type": "automated", "surface": "POST /api/charge", "state": "pass" },
+          { "id": "CP-2", "label": "Idempotent on retried charge", "type": "automated", "surface": "POST /api/charge", "state": "pass" },
+          { "id": "CP-3", "label": "Declined card handled gracefully", "type": "automated", "surface": "POST /api/charge", "state": "not-run" },
+          { "id": "CP-4", "label": "Webhook reconciles charge state", "type": "automated", "surface": "POST /api/stripe/webhook", "state": "fail" },
+          { "id": "CP-5", "label": "Refund path issues a credit", "type": "manual", "surface": "POST /api/refund", "state": "not-run" }
+        ]
+      },
+      "todo": { "done": ["PaymentIntent create", "Idempotency keys"], "doing": ["Webhook reconciliation"], "next": ["Decline handling", "Apple Pay", "Refunds"] },
+      "surfaces": ["/checkout — page", "POST /api/charge — endpoint", "POST /api/stripe/webhook — endpoint"],
+      "dependsOn": ["payments-api", "cart-schema"],
+      "artifacts": {
+        "spec": ".github/specs/payments/",
+        "files": { "requirements": ".github/specs/payments/requirements.md", "design": ".github/specs/payments/design.md", "tasks": ".github/specs/payments/tasks.md", "verification": ".github/specs/payments/verification.md" }
+      }
+    },
+    {
+      "id": "apple-pay",
+      "kind": "feature",
+      "room": "checkout",
+      "title": "Apple Pay",
+      "summary": "Express checkout via the Apple Pay sheet.",
+      "detail": "Proposed: Payment Request API wired to Stripe Apple Pay. Blocked on domain verification and on the payments webhook landing first.",
+      "status": "planned",
+      "verification": null,
+      "todo": { "done": [], "doing": [], "next": ["Domain verification", "Wire Payment Request API", "E2E test on device"] },
+      "surfaces": [],
+      "dependsOn": ["payments"],
+      "artifacts": {
+        "spec": ".github/specs/apple-pay/",
+        "files": { "requirements": ".github/specs/apple-pay/requirements.md" }
+      }
+    },
+    {
+      "id": "analytics",
+      "kind": "feature",
+      "room": "dashboard",
+      "title": "Analytics",
+      "summary": "Per-account usage charts from daily rollups.",
+      "detail": "A nightly job rolls events into daily buckets; charts read the rollup, never raw events. Built and shipping, but has no verification contract yet.",
+      "status": "built",
+      "verification": null,
+      "todo": { "done": ["Rollup job", "Usage chart", "Date-range picker"], "doing": [], "next": ["Export CSV", "Verification spec"] },
+      "surfaces": ["/dashboard/analytics — page"],
+      "dependsOn": ["events-schema"],
+      "artifacts": {
+        "spec": ".github/specs/analytics/",
+        "files": { "tasks": ".github/specs/analytics/tasks.md" }
+      }
+    },
+    {
+      "id": "auth-schema",
+      "kind": "schema",
+      "room": "auth",
+      "title": "Auth schema",
+      "summary": "users, sessions, oauth_identities tables.",
+      "detail": "Postgres tables backing auth. users (id, email, password_hash), sessions (token, user_id, expires_at), oauth_identities (provider, subject, user_id).",
+      "status": "verified",
+      "verification": null,
+      "todo": { "done": ["users", "sessions", "oauth_identities"], "doing": [], "next": [] },
+      "surfaces": [],
+      "dependsOn": [],
+      "artifacts": { "spec": ".github/specs/auth-schema/", "files": {} }
+    },
+    {
+      "id": "cart-schema",
+      "kind": "schema",
+      "room": "checkout",
+      "title": "Cart schema",
+      "summary": "carts, cart_items tables (money in cents).",
+      "detail": "carts (id, session_id) and cart_items (cart_id, sku, qty, unit_price_cents). All money columns are integer cents.",
+      "status": "verified",
+      "verification": null,
+      "todo": { "done": ["carts", "cart_items"], "doing": [], "next": [] },
+      "surfaces": [],
+      "dependsOn": [],
+      "artifacts": { "spec": ".github/specs/cart-schema/", "files": {} }
+    },
+    {
+      "id": "payments-api",
+      "kind": "integration",
+      "room": "checkout",
+      "title": "Stripe API",
+      "summary": "External Stripe integration.",
+      "detail": "Stripe PaymentIntents + webhooks. Keys referenced by env var only. The webhook endpoint is the only writer of final charge state.",
+      "status": "built",
+      "verification": null,
+      "todo": { "done": ["PaymentIntents client", "Webhook receiver"], "doing": [], "next": ["Refunds API"] },
+      "surfaces": [],
+      "dependsOn": [],
+      "artifacts": { "spec": ".github/specs/payments-api/", "files": {} }
+    },
+    {
+      "id": "events-schema",
+      "kind": "schema",
+      "room": "dashboard",
+      "title": "Events schema",
+      "summary": "events + daily_rollups tables.",
+      "detail": "events (raw, append-only) and daily_rollups (account_id, day, metric, value). Charts read rollups only.",
+      "status": "verified",
+      "verification": null,
+      "todo": { "done": ["events", "daily_rollups"], "doing": [], "next": [] },
+      "surfaces": [],
+      "dependsOn": [],
+      "artifacts": { "spec": ".github/specs/events-schema/", "files": {} }
+    }
+  ],
+  "edges": [
+    { "from": "login-flow", "to": "auth-schema", "type": "depends-on" },
+    { "from": "password-reset", "to": "auth-schema", "type": "depends-on" },
+    { "from": "cart", "to": "cart-schema", "type": "depends-on" },
+    { "from": "payments", "to": "payments-api", "type": "depends-on" },
+    { "from": "payments", "to": "cart-schema", "type": "depends-on" },
+    { "from": "apple-pay", "to": "payments", "type": "depends-on" },
+    { "from": "analytics", "to": "events-schema", "type": "depends-on" }
+  ],
+  "bugs": [
+    { "id": "20260612-webhook-dupe", "title": "Stripe webhook double-processes on retry", "status": "open", "node": "payments" }
+  ],
+  "stats": { "features": 6, "rooms": 3, "verified": 2, "inProgress": 2, "openBugs": 1 }
+}

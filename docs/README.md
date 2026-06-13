@@ -6,6 +6,7 @@ Four workflows cover everything you do with Agent0-Context-Framework. Pick the o
 |------|------|
 | **New to the framework — what is this?** | [`getting-started.md`](./getting-started.md) — the newbie-friendly tour. Also surfaced via `/help` in any adopted project. |
 | **How do I actually use this day-to-day?** | [`workflow-guide.md`](./workflow-guide.md) — opinionated lifecycle guide: daily/weekly rhythm, full feature lifecycle example, anti-patterns, what's missing. |
+| **Visualize the project as a clickable map** | [`feature-canvas.md`](./feature-canvas.md) — the feature canvas: rooms, features, verification checkpoints, and a done/doing/next board, rendered from `FEATURE_TREE.json` by `canvas.html`. |
 | Adopt the framework into a brand-new project | [`setup-new-project.md`](./setup-new-project.md) |
 | Bring a project that adopted before `2026-05-15` up to date | [`upgrade-existing-project.md`](./upgrade-existing-project.md) |
 | Add a new slash command, agent, or instruction file to the framework itself | [`extending-the-framework.md`](./extending-the-framework.md) |

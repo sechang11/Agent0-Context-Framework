@@ -7,6 +7,38 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-13
+
+- Added `canvas-server.cjs` — a portable, **auth-gated** way to put the feature canvas **online** for any project, behind a password, **without touching the app**. Zero dependencies (Node built-ins only), so it runs on any Node host (Railway / Render / Fly / a VPS) or locally. It serves **only** `canvas.html` + `FEATURE_TREE.json` from an allowlist — app source, specs, and secrets are never exposed even though it runs in the project dir. Refuses to start without `CANVAS_PASSWORD`; HTTP Basic Auth on every request.
+
+- Deploy model is plugin-style and stack-agnostic: the deployable unit is just three files together (`canvas-server.cjs` + `canvas.html` + the project's `FEATURE_TREE.json`), deployed as its **own** service. The same recipe works for every project regardless of its own stack (Vercel, Cloudflare, bare metal) — the app is untouched. Start command `node canvas-server.cjs`; set `CANVAS_PASSWORD`; the host's `PORT` is picked up automatically. Documented in `docs/feature-canvas.md` → "Put it online (auth-gated)".
+
+- Security note baked into the docs: `FEATURE_TREE.json` is an internal map (endpoints, file paths, sometimes security details) — never host it on an open public URL; keep it auth-gated or sanitize first.
+
+
+## 2026-06-12
+
+- Added the feature canvas — a clickable visual map of every 'room' in the project, the features inside each, their verification checkpoints, and an ongoing done/doing/next board per feature. It answers at a glance: what exists, what's in flight, what's next, and what depends on what. The canvas is a READ-ONLY window onto the Markdown artifacts the framework already produces — agents own the data, you just look at it. No new system to hand-maintain.
+
+- /feature-tree now emits FEATURE_TREE.json alongside FEATURE_TREE.md — one walk over .github/specs/, two projections. The Markdown is for humans/agents to read; the JSON is the machine-readable graph the canvas renders. It refreshes automatically wherever /feature-tree already runs (end of /spec, /cover, /verify), so it never drifts.
+
+- Added .github/schemas/feature-tree.schema.json (the JSON contract), FEATURE_TREE.example.json (a complete worked example / schema-by-example), and canvas.html (a single self-contained, dependency-free viewer at the repo root — serve the folder over http to auto-load FEATURE_TREE.json, or just open canvas.html and drag your JSON onto it). See docs/feature-canvas.md.
+
+- Introduced an OPTIONAL topology frontmatter block (kind / room / depends_on) that gives the graph its shape. Declared early in requirements.md and made canonical in verification.md (the one file both /verify and /cover always produce). All fields are optional and degrade gracefully: omit them and a feature still appears (kind=feature, ungrouped, no deps). The ONE genuinely new thing a project must capture for a real map is a stable id + parent (room) + dependsOn edges.
+
+- Added .github/specs/_rooms.yml — an optional rooms registry (title/icon/order/summary). Absent → rooms are auto-derived from the distinct room values across features and titleized. It only adds polish that can't be inferred.
+
+- tasks.md now uses checkbox state to drive the per-feature board: `- [ ]` = next, `- [~]` = doing, `- [x]` = done. Order is preserved (still one PR per task). Legacy numbered task lists still parse — every task counts as 'next'. Updated the _template/ files and the inline templates in /spec.
+
+- Node status (planned / in-progress / built / verified) is DERIVED, not declared — from verification status, the task board, and what files exist. verification.md checkpoints (### CP-N + Last result) and ## Surfaces are rolled straight into each node. summary comes from requirements.md, the 'full version' detail from design.md ## Approach — neither is a new spec file, just a rollup.
+
+- Updated the verification-engineer agent to write/carry the topology block (inferring room from surfaces and depends_on from design.md's affected-components, conservatively). Updated /spec, /verify, /feature-tree (both shim + prompt), MANIFEST, and CLAUDE.md. Adopted projects pick this up via /update-framework; their FEATURE_TREE.json appears on the next regen.
+
+- canvas.html gained a second view: an auto-laid-out **dependency graph** alongside the rooms tree (shared detail panel + filters). The layered/Sugiyama layout is computed in vanilla JS — no layout library, still zero-dependency and offline-friendly. Foundations (schemas/integrations) sit at the bottom, features above, arrows point to dependencies. Pan/drag, wheel-zoom, +/−/fit. The payoff interaction: click a node to highlight everything that depends on it (with an "affected if changed" count) and everything it needs, dimming the rest — the "what breaks if I touch this?" question, visual. Filtering by kind drops a whole layer and its edges.
+
+- Graph view: rooms now render as labelled **clusters** (swimlanes) — grouping and dependency flow in one picture, with depth rows aligned across lanes. And **bugs are pinned to their nodes**: the `bugs[]` array (node-referenced) shows as a red count badge on graph + tree nodes and a linked Bugs section in the detail panel. Both read from data already in `FEATURE_TREE.json` — no schema change.
+
+
 ## 2026-05-22
 
 - /feature-tree expanded from feature-index to full project index. The regenerated FEATURE_TREE.md now covers: features (as before, with type/summary/status/file-links), bugs (grouped by open/in-progress/resolved-collapsed), themes (with mood + adoption marker), latest reports (PROGRESS_REPORT.md + NEXT_STEPS.md with freshness timestamps), and framework state (version + mode). Single-file TOC for everything the framework knows about the project.

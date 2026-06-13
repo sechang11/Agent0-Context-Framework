@@ -53,6 +53,10 @@ source: spec | code
 generated: {YYYY-MM-DD HH:MM}
 last_verified: never | {YYYY-MM-DD HH:MM}
 status: draft | ready | passing | failing | partial | pending
+# --- topology (feature canvas) — see "Topology block" below ---
+kind: feature
+room: {room-id or omit}
+depends_on: [{ids}]
 ---
 
 # Verification: {feature-name}
@@ -156,6 +160,19 @@ This feature is verified complete when:
 - [ ] No regressions in adjacent features: {list, or "none identified"}
 - [ ] (code-derived only) Concerns triaged — each one either filed as `/report-bug` or confirmed-by-design.
 ```
+
+## Topology block — placing the feature on the canvas
+
+The frontmatter carries a small **topology block** (`kind`, `room`, `depends_on`) that `/feature-tree` reads to build the feature canvas (`FEATURE_TREE.json` → `canvas.html`). It's how this feature shows up on the map and connects to others. Fill it whenever you write or regenerate a `verification.md`:
+
+- **Carry forward what's declared.** If `requirements.md` has a topology frontmatter block (spec-derived mode), copy its `kind` / `room` / `depends_on` into the `verification.md` frontmatter verbatim. The `verification.md` copy is canonical — `/feature-tree` prefers it.
+- **Infer the rest, conservatively:**
+  - `kind` — `feature` by default. Use `endpoint` for a pure API surface, `component` for a UI component, `schema` for a data model/migration, `integration` for an external service. When unsure, `feature`.
+  - `room` — the domain this belongs to. In code-derived mode, infer from the surfaces (e.g. all `/checkout/*` and `POST /api/charge` → `room: checkout`). Cross-check against `.github/specs/_rooms.yml` if it exists and reuse an existing room id. If you genuinely can't tell, **omit `room`** rather than guessing — it falls back to ungrouped, and the user can set it.
+  - `depends_on` — ids of features/schemas this one needs. In spec-derived mode, read `design.md` `## Affected components` and `## Cross-component interactions`. In code-derived mode, infer from the imports/calls at the surfaces. Use the other features' ids (their spec dir names). List only real dependencies; `[]` is fine.
+- **Don't overreach.** Topology is a best-effort map, not a contract. A wrong `room` is cosmetic and user-fixable. Never invent a `depends_on` id that doesn't correspond to a real feature/schema.
+
+Mention in your return summary which topology values you set or inferred, so the orchestrator can surface anything worth the user correcting.
 
 ## Writing checkpoints — language matters
 

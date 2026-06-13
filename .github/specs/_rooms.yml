@@ -1,0 +1,40 @@
+# Rooms registry — OPTIONAL.
+#
+# A "room" groups feature nodes into a domain / page-group / service for the feature
+# canvas. Each feature declares which room it belongs to via `room:` in its
+# verification.md frontmatter (see the Topology block in any verification.md, or
+# .github/specs/_template/requirements.md).
+#
+# This file is OPTIONAL. If it's absent, /feature-tree still builds rooms by collecting
+# the distinct `room` values across all features and titleizing the id. This file only
+# adds polish that can't be inferred:
+#
+#   title   — display name (default: titleized id)
+#   icon    — a Tabler outline icon name (https://tabler.io/icons), rendered by canvas.html
+#   order   — render order; lower numbers first (default: alphabetical by title)
+#   summary — one-line description of what lives in the room
+#
+# Leading-underscore filename means /feature-tree's feature walk skips it (it's metadata,
+# not a feature). Features that declare a `room` not listed here still appear — the room is
+# auto-created with default title/icon.
+#
+# PROJECT: replace the examples below with your real rooms, or delete this file entirely.
+
+rooms:
+  - id: auth
+    title: Auth
+    icon: ti-lock
+    order: 1
+    summary: Sign-in, sessions, account recovery.
+
+  - id: checkout
+    title: Checkout
+    icon: ti-shopping-cart
+    order: 2
+    summary: Cart through payment and receipts.
+
+  - id: dashboard
+    title: Dashboard
+    icon: ti-layout-dashboard
+    order: 3
+    summary: Authenticated account views and analytics.

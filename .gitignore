@@ -5,6 +5,8 @@
 PROGRESS_REPORT.md
 NEXT_STEPS.md
 FEATURE_TREE.md
+FEATURE_TREE.json
+# (FEATURE_TREE.example.json is committed framework content — not ignored)
 
 # OS / editor noise
 .DS_Store

@@ -31,7 +31,15 @@ Never combine them. Never put them inside a source directory. Use kebab-case for
 
 ## requirements.md
 
+Open with the optional **topology** frontmatter (for the feature canvas), then the body. Topology fields are optional — fill `room` and `depends_on` if you can place the feature now; otherwise leave them blank and the verification-engineer infers them at `/verify` time. `/feature-tree` reads them to build `FEATURE_TREE.json` (see `docs/feature-canvas.md`).
+
 ```
+---
+kind: feature                 # feature | endpoint | component | schema | integration
+room:                         # room id from .github/specs/_rooms.yml (or leave blank → ungrouped)
+depends_on: []                # ids of features/schemas this needs, e.g. [auth-schema]
+---
+
 # Requirements: {Feature Name}
 
 ## Problem
@@ -96,10 +104,12 @@ One paragraph: the chosen approach, in plain language.
 
 Order the tasks so the system stays working at each step. Each task is small enough to be one PR.
 
+Use checkbox state — it drives the feature canvas's done/doing/next board: `- [ ]` = next, `- [~]` = doing, `- [x]` = done. New specs start every task at `- [ ]`.
+
 ## Tasks
-1. [component] task description
-2. [component] task description
-3. ...
+- [ ] **[component]** task description
+- [ ] **[component]** task description
+- [ ] ...
 
 ## Test plan
 - unit tests covering ...
@@ -126,7 +136,7 @@ Order the tasks so the system stays working at each step. Each task is small eno
 
 ## Regenerate the feature tree
 
-After all three spec files are written and architect approval is done (or whenever a spec file is added/modified), regenerate `FEATURE_TREE.md` at the main tree's repo root. The simplest way: follow the logic in `.github/prompts/feature-tree.prompt.md` to walk `.github/specs/` and rewrite the file. This keeps the table of contents in sync without the user having to do anything.
+After all three spec files are written and architect approval is done (or whenever a spec file is added/modified), regenerate `FEATURE_TREE.md` **and** `FEATURE_TREE.json` at the main tree's repo root. The simplest way: follow the logic in `.github/prompts/feature-tree.prompt.md`, which walks `.github/specs/` and rewrites both in one pass. This keeps the table of contents and the feature canvas in sync without the user having to do anything. (A brand-new spec with no `verification.md` yet still appears — as a `planned` node carrying whatever topology you put in `requirements.md`.)
 
 If the user runs `/spec` and aborts before writing files, skip this step.
 

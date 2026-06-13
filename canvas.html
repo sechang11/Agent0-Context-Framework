@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Feature Canvas — Agent0</title>
+<style>
+  :root {
+    --bg: #faf9f5; --surface: #ffffff; --surface-2: #f1efe8;
+    --text: #1f1e1b; --text-2: #5f5e5a; --text-3: #8a887f;
+    --border: rgba(0,0,0,.12); --border-2: rgba(0,0,0,.22);
+    --ok: #1d9e75; --info: #378add; --warn: #ba7517; --muted: #b4b2a9; --danger: #e24b4a;
+    --radius: 10px; --radius-sm: 7px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1c1a; --surface: #262420; --surface-2: #2f2c28;
+      --text: #ecebe6; --text-2: #b4b2a9; --text-3: #888780;
+      --border: rgba(255,255,255,.12); --border-2: rgba(255,255,255,.26);
+      --ok: #5dcaa5; --info: #85b7eb; --warn: #ef9f27; --muted: #5f5e5a; --danger: #f09595;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 400 15px/1.6 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  a { color: var(--info); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 22px 60px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin-bottom: 6px; }
+  h1 { font-size: 20px; font-weight: 500; margin: 0; }
+  .sub { color: var(--text-3); font-size: 13px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 16px; }
+  .chip { background: var(--surface-2); border-radius: var(--radius-sm); padding: 5px 11px; font-size: 13px; color: var(--text-2); }
+  .chip b { color: var(--text); font-weight: 500; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  input[type=search], select { font: inherit; font-size: 14px; color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; height: 36px; }
+  input[type=search] { min-width: 180px; flex: 1; }
+  .kinds { display: flex; gap: 6px; flex-wrap: wrap; }
+  .kbtn { font: inherit; font-size: 12.5px; cursor: pointer; background: var(--surface); color: var(--text-2);
+    border: 1px solid var(--border); border-radius: 20px; padding: 5px 11px; }
+  .kbtn.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .seg button { font: inherit; font-size: 13px; cursor: pointer; background: var(--surface); color: var(--text-2);
+    border: none; padding: 7px 13px; }
+  .seg button.on { background: var(--text); color: var(--bg); }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); margin-bottom: 14px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 5px; }
+  .grid { display: grid; gap: 16px; align-items: start; }
+  .grid-tree { grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr); }
+  .grid-graph { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+  @media (max-width: 760px) { .grid-tree, .grid-graph { grid-template-columns: 1fr; } }
+  aside { background: var(--surface-2); border-radius: var(--radius); padding: 10px; }
+  .room-h { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: .04em; margin: 12px 5px 7px; }
+  .room-h:first-child { margin-top: 4px; }
+  .room-h small { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text-3); }
+  .node { width: 100%; text-align: left; display: flex; align-items: center; gap: 9px; padding: 8px 9px;
+    margin-bottom: 4px; border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm);
+    cursor: pointer; font: inherit; font-size: 13.5px; color: var(--text); }
+  .node:hover { background: var(--surface); }
+  .node.sel { background: var(--surface); border-color: var(--border-2); }
+  .node .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .node.sel .nm { font-weight: 500; }
+  .node .frac { font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .kind-tag { font-size: 10px; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+
+  /* graph view */
+  #graphpane { position: relative; background: var(--surface-2); border-radius: var(--radius); height: 560px; overflow: hidden; }
+  svg.graph { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  svg.graph.grabbing { cursor: grabbing; }
+  .gnode { cursor: pointer; }
+  .gnode rect.card { fill: var(--surface); stroke: var(--border-2); stroke-width: 1.2; }
+  .gnode text.t { font: 500 12.5px -apple-system, system-ui, sans-serif; fill: var(--text); }
+  .gnode text.s { font: 400 10.5px -apple-system, system-ui, sans-serif; fill: var(--text-3); }
+  .gnode.dim { opacity: .16; }
+  .gnode.sel rect.card { stroke-width: 2.4; }
+  .gnode rect.ring { fill: none; stroke: var(--text); stroke-width: 0; }
+  .gnode.sel rect.ring { stroke-width: 2.4; stroke: var(--text); opacity: .35; }
+  path.edge { fill: none; stroke: var(--border-2); stroke-width: 1.3; }
+  path.edge.dim { opacity: .08; }
+  path.edge.need { stroke: var(--info); stroke-width: 2; }
+  path.edge.impact { stroke: var(--warn); stroke-width: 2; }
+  rect.lane { fill: var(--surface); fill-opacity: .5; stroke: var(--border); stroke-dasharray: 4 4; }
+  text.lane-label { font: 500 11px -apple-system, system-ui, sans-serif; fill: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+  .gnode .bugbadge text { font: 600 10px -apple-system, system-ui, sans-serif; }
+  @media (prefers-color-scheme: dark) { rect.lane { fill-opacity: .32; } }
+  .zoom { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; }
+  .zoom button { font: inherit; font-size: 14px; line-height: 1; cursor: pointer; width: 30px; height: 30px;
+    background: var(--surface); color: var(--text-2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .zoom button:hover { color: var(--text); }
+  .zoom button.fit { width: auto; padding: 0 10px; font-size: 12.5px; }
+  .ginfo { position: absolute; top: 10px; left: 12px; max-width: 60%; font-size: 12.5px; color: var(--text-2);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 11px; display: none; }
+  .ginfo.show { display: block; }
+  .ginfo b { font-weight: 500; color: var(--text); }
+  .ginfo .imp { color: var(--warn); }
+  .ginfo .need { color: var(--info); }
+
+  section.detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; min-height: 420px; }
+  .crumb { font-size: 12px; color: var(--text-3); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: 11px; border-radius: var(--radius-sm); padding: 2px 9px; }
+  .dtitle { font-size: 19px; font-weight: 500; margin: 2px 0 8px; }
+  .summary { color: var(--text-2); font-size: 14px; margin: 0 0 8px; }
+  .more { font: inherit; font-size: 12px; cursor: pointer; background: transparent; color: var(--text-2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 10px; }
+  .sec { border-top: 1px solid var(--border); margin: 16px 0 11px; }
+  .sec-h { font-size: 12.5px; font-weight: 500; margin-bottom: 9px; }
+  .sec-h span { color: var(--text-3); font-weight: 400; }
+  .cp { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; margin-bottom: 7px; }
+  .cp svg { flex: none; margin-top: 2px; }
+  .cp .meta { font-size: 11.5px; color: var(--text-3); }
+  .board { display: flex; gap: 14px; }
+  .board .col { flex: 1; min-width: 0; }
+  .board h4 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 7px; }
+  .board li { list-style: none; font-size: 13px; color: var(--text-2); line-height: 1.5; margin-bottom: 5px; display: flex; gap: 6px; }
+  .board ul { margin: 0; padding: 0; }
+  .board .empty { color: var(--text-3); font-style: italic; font-size: 12.5px; }
+  .deps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .deps button { font: inherit; font-size: 12px; cursor: pointer; background: var(--surface-2); color: var(--text-2);
+    border: none; border-radius: var(--radius-sm); padding: 3px 9px; }
+  .deps button:hover { color: var(--text); }
+  .links { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 12.5px; }
+  .links a, .links span { color: var(--text-2); }
+  .bug { background: var(--danger); color: var(--bg); font-size: 10px; border-radius: 8px; padding: 0 5px; line-height: 16px; }
+  .bugrow { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+  .bdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .bmeta { font-size: 11px; color: var(--text-3); margin-left: auto; }
+  .banner { background: var(--surface-2); border: 1px dashed var(--border-2); border-radius: var(--radius);
+    padding: 11px 14px; font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
+  .banner b { color: var(--text); font-weight: 500; }
+  .drop-on { outline: 2px solid var(--info); outline-offset: 4px; }
+  footer { margin-top: 26px; font-size: 12px; color: var(--text-3); }
+</style>
+</head>
+<body>
+<div class="wrap" id="root">
+  <header>
+    <h1>Feature canvas</h1>
+    <span class="sub" id="meta"></span>
+  </header>
+  <div id="banner"></div>
+  <div class="stats" id="stats"></div>
+  <div class="controls">
+    <span class="seg" id="viewseg">
+      <button data-v="tree">Tree</button><button data-v="graph">Graph</button>
+    </span>
+    <input type="search" id="search" placeholder="Search features…" />
+    <select id="roomf"><option value="">All rooms</option></select>
+    <div class="kinds" id="kinds"></div>
+  </div>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--ok)"></span>verified</span>
+    <span><span class="dot" style="background:var(--info)"></span>built</span>
+    <span><span class="dot" style="background:var(--warn)"></span>in progress</span>
+    <span><span class="dot" style="background:var(--muted)"></span>planned</span>
+    <span id="graphhint" style="color:var(--text-3)">· in Graph: click a node to see what depends on it</span>
+  </div>
+  <div class="grid grid-graph" id="grid">
+    <div class="leftcell">
+      <aside id="tree" style="display:none"></aside>
+      <div id="graphpane">
+        <div class="ginfo" id="ginfo"></div>
+        <div class="zoom">
+          <button data-z="out" aria-label="zoom out">&minus;</button>
+          <button data-z="in" aria-label="zoom in">+</button>
+          <button data-z="fit" class="fit">fit</button>
+        </div>
+        <svg class="graph" id="gsvg"></svg>
+      </div>
+    </div>
+    <section class="detail" id="detail"></section>
+  </div>
+  <footer>Drop a <code>FEATURE_TREE.json</code> anywhere on this page to load your project · generated by <code>/feature-tree</code></footer>
+</div>
+
+<script>
+const DEMO = {
+  generated: "built-in demo", framework: { version: "—", mode: "review" },
+  rooms: [
+    { id:"auth", title:"Auth", order:1 },
+    { id:"checkout", title:"Checkout", order:2 }
+  ],
+  nodes: [
+    { id:"login-flow", kind:"feature", room:"auth", title:"Login flow", status:"verified",
+      summary:"Email + OAuth sign-in.", detail:"Credential and OAuth via PKCE; httpOnly session cookies, 14-day sliding expiry.",
+      verification:{ source:"spec", statusRaw:"passing", lastVerified:"2026-06-10 09:12", passing:2, total:2,
+        checkpoints:[{id:"CP-1",label:"Valid credentials sign in",state:"pass"},{id:"CP-2",label:"Bad password rejected",state:"pass"}]},
+      todo:{done:["Email/password","OAuth"],doing:[],next:["Magic-link"]}, surfaces:["/login — page"], dependsOn:["auth-schema"], artifacts:{spec:".github/specs/login-flow/",files:{}} },
+    { id:"password-reset", kind:"feature", room:"auth", title:"Password reset", status:"in-progress",
+      summary:"Token-based reset.", detail:"Single-use signed token, 30-min TTL.",
+      verification:{ source:"spec", statusRaw:"pending", lastVerified:"2026-06-11 16:40", passing:1, total:2,
+        checkpoints:[{id:"CP-1",label:"Token emailed",state:"pass"},{id:"CP-2",label:"Token expires",state:"not-run"}]},
+      todo:{done:["Request endpoint"],doing:["Token TTL"],next:["Throttle"]}, surfaces:["/reset — page"], dependsOn:["auth-schema"], artifacts:{spec:".github/specs/password-reset/",files:{}} },
+    { id:"payments", kind:"feature", room:"checkout", title:"Payments", status:"in-progress",
+      summary:"Stripe charge + webhook reconciliation.", detail:"PaymentIntents with idempotency keys; webhook reconciles async — client success is never trusted.",
+      verification:{ source:"spec", statusRaw:"partial", lastVerified:"2026-06-12 08:55", passing:1, total:3,
+        checkpoints:[{id:"CP-1",label:"Card payment succeeds",state:"pass"},{id:"CP-2",label:"Declined card handled",state:"not-run"},{id:"CP-3",label:"Webhook reconciles charge",state:"fail"}]},
+      todo:{done:["PaymentIntent create"],doing:["Webhook reconciliation"],next:["Decline handling","Apple Pay"]},
+      surfaces:["/checkout — page","POST /api/charge — endpoint"], dependsOn:["payments-api","cart-schema"], artifacts:{spec:".github/specs/payments/",files:{}} },
+    { id:"cart", kind:"feature", room:"checkout", title:"Cart", status:"verified",
+      summary:"Line items, totals in cents.", detail:"Server-authoritative cart; all money is integer cents.",
+      verification:{ source:"spec", statusRaw:"passing", lastVerified:"2026-06-09 11:02", passing:2, total:2,
+        checkpoints:[{id:"CP-1",label:"Add/remove items",state:"pass"},{id:"CP-2",label:"Totals in cents",state:"pass"}]},
+      todo:{done:["Add/remove","Cents math"],doing:[],next:["Saved carts"]}, surfaces:["/cart — page"], dependsOn:["cart-schema"], artifacts:{spec:".github/specs/cart/",files:{}} },
+    { id:"apple-pay", kind:"feature", room:"checkout", title:"Apple Pay", status:"planned",
+      summary:"Express checkout.", detail:"Payment Request API → Stripe Apple Pay. Blocked on the webhook landing first.",
+      verification:null, todo:{done:[],doing:[],next:["Domain verification","Wire Payment Request API"]}, surfaces:[], dependsOn:["payments"], artifacts:{spec:".github/specs/apple-pay/",files:{}} },
+    { id:"auth-schema", kind:"schema", room:"auth", title:"Auth schema", status:"verified",
+      summary:"users, sessions, oauth tables.", detail:"Postgres tables backing auth.",
+      verification:null, todo:{done:["users","sessions"],doing:[],next:[]}, surfaces:[], dependsOn:[], artifacts:{spec:".github/specs/auth-schema/",files:{}} },
+    { id:"cart-schema", kind:"schema", room:"checkout", title:"Cart schema", status:"verified",
+      summary:"carts, cart_items (cents).", detail:"All money columns are integer cents.",
+      verification:null, todo:{done:["carts","cart_items"],doing:[],next:[]}, surfaces:[], dependsOn:[], artifacts:{spec:".github/specs/cart-schema/",files:{}} },
+    { id:"payments-api", kind:"integration", room:"checkout", title:"Stripe API", status:"built",
+      summary:"External Stripe integration.", detail:"PaymentIntents + webhooks; keys by env var only.",
+      verification:null, todo:{done:["PaymentIntents client","Webhook receiver"],doing:[],next:["Refunds API"]}, surfaces:[], dependsOn:[], artifacts:{spec:".github/specs/payments-api/",files:{}} }
+  ],
+  bugs: [{ id:"20260612-webhook-dupe", title:"Stripe webhook double-processes on retry", status:"open", node:"payments" }]
+};
+
+const STATUS = {
+  verified: { c: "var(--ok)",   bg: "rgba(29,158,117,.14)",  label: "verified" },
+  built:    { c: "var(--info)", bg: "rgba(55,138,221,.14)",  label: "built" },
+  "in-progress": { c: "var(--warn)", bg: "rgba(186,117,23,.16)", label: "in progress" },
+  planned:  { c: "var(--muted)",bg: "rgba(136,135,128,.16)", label: "planned" }
+};
+const ICON = {
+  pass:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2"><path d="M5 12l4 4 10-10"/></svg>',
+  fail:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  pending: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>',
+  skip:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>',
+  "not-run":'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-dasharray="3 3"><circle cx="12" cy="12" r="9"/></svg>'
+};
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[m]));
+const titleize = s => s.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+let data = null, sel = null;
+const state = { q: "", room: "", kinds: new Set(), expand: false, view: "graph", userPicked: false };
+
+/* ---------- shared selection ---------- */
+function selectNode(id) {
+  sel = id; state.userPicked = true; state.expand = false;
+  renderDetail();
+  if (state.view === "graph") { applyHighlight(); } else { renderTree(); }
+}
+
+/* ---------- filtering ---------- */
+function passFilter(n) {
+  if (state.kinds.size && !state.kinds.has(n.kind)) return false;
+  if (state.room && n.room !== state.room) return false;
+  if (state.q) {
+    const hay = (n.title + " " + (n.summary || "") + " " + (n.detail || "")).toLowerCase();
+    if (!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+function visibleNodes() { return data.nodes.filter(passFilter); }
+function frac(n) { return n.verification && n.verification.total ? n.verification.passing + "/" + n.verification.total : ""; }
+
+function roomsSorted() {
+  const known = (data.rooms || []).slice();
+  const ids = new Set(known.map(r => r.id));
+  data.nodes.forEach(n => { if (n.room && !ids.has(n.room)) { ids.add(n.room); known.push({ id: n.room, title: titleize(n.room) }); } });
+  known.sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || (a.title > b.title ? 1 : -1));
+  if (data.nodes.some(n => !n.room)) known.push({ id: null, title: "Ungrouped" });
+  return known;
+}
+function roomTitle(id) { const r = (data.rooms || []).find(x => x.id === id); return r ? r.title : (id ? titleize(id) : "Ungrouped"); }
+function bugsFor(id) { return (data.bugs || []).filter(b => b.node === id); }
+const BUGCLR = { open: "var(--danger)", "in-progress": "var(--warn)" };
+
+/* ---------- tree view ---------- */
+function renderTree() {
+  const el = document.getElementById("tree");
+  let h = "";
+  roomsSorted().forEach(r => {
+    const ns = data.nodes.filter(n => n.room === r.id && passFilter(n));
+    if (!ns.length) return;
+    h += `<div class="room-h">${esc(r.title)} <small>${ns.length}</small></div>`;
+    ns.forEach(n => {
+      const s = STATUS[n.status] || STATUS.planned, f = frac(n), bc = bugsFor(n.id).length;
+      h += `<button class="node ${n.id === sel ? "sel" : ""}" data-id="${esc(n.id)}">
+        <span class="dot" style="background:${s.c}"></span>
+        <span class="nm">${esc(n.title)}</span>
+        ${bc ? `<span class="bug">${bc}</span>` : ""}
+        ${n.kind !== "feature" ? `<span class="kind-tag">${esc(n.kind)}</span>` : ""}
+        ${f ? `<span class="frac">${f}</span>` : ""}
+      </button>`;
+    });
+  });
+  el.innerHTML = h || `<div class="room-h">No matches</div>`;
+  el.querySelectorAll(".node").forEach(b => b.onclick = () => selectNode(b.dataset.id));
+}
+
+/* ---------- graph view ---------- */
+const NW = 162, NH = 46, COLGAP = 30, ROWGAP = 66, LANEGAP = 40, LANE_LABEL_H = 26, LANE_PAD = 14;
+let G = null; // { sig, gg, pos, nodeEls, edges, edgeEls, tf, fwd, rev }
+
+function visibleEdges(nodes) {
+  const ids = new Set(nodes.map(n => n.id));
+  const out = [];
+  nodes.forEach(n => (n.dependsOn || []).forEach(to => { if (ids.has(to)) out.push({ from: n.id, to }); }));
+  return out;
+}
+function adjacency(nodes, edges) {
+  const fwd = new Map(), rev = new Map();
+  nodes.forEach(n => { fwd.set(n.id, []); rev.set(n.id, []); });
+  edges.forEach(e => { fwd.get(e.from).push(e.to); rev.get(e.to).push(e.from); });
+  return { fwd, rev };
+}
+function reachable(start, adj) {
+  const seen = new Set(), stack = [start];
+  while (stack.length) { const id = stack.pop(); for (const nb of adj.get(id) || []) if (!seen.has(nb)) { seen.add(nb); stack.push(nb); } }
+  seen.delete(start); return seen;
+}
+function computeDepth(nodes, fwd) {
+  const depth = new Map(), st = new Map();
+  function dfs(id) {
+    if (depth.has(id)) return depth.get(id);
+    if (st.get(id) === 1) return 0;            // cycle guard
+    st.set(id, 1);
+    let d = 0;
+    for (const t of fwd.get(id) || []) d = Math.max(d, 1 + dfs(t));
+    st.set(id, 2); depth.set(id, d); return d;
+  }
+  nodes.forEach(n => dfs(n.id));
+  return depth;
+}
+function layout(nodes, edges) {
+  // Room swimlanes (columns), with dependency depth as the vertical axis shared across lanes:
+  // foundations (depth 0) sit at the bottom row, the features built on them rise to the top.
+  const { fwd, rev } = adjacency(nodes, edges);
+  const depth = computeDepth(nodes, fwd);
+  const maxD = Math.max(0, ...nodes.map(n => depth.get(n.id)));
+  const nRows = maxD + 1;
+  const rowOf = id => maxD - depth.get(id);                       // 0 = most-dependent (top)
+  const rs = roomsSorted().filter(r => nodes.some(n => n.room === r.id));
+  const lanes = rs.map(r => {
+    const rows = Array.from({ length: nRows }, () => []);
+    nodes.filter(n => n.room === r.id).forEach(n => rows[rowOf(n.id)].push(n.id));
+    rows.forEach(row => row.sort((a, b) => byId(nodes, a).title > byId(nodes, b).title ? 1 : -1));
+    return { room: r, rows, cols: Math.max(1, ...rows.map(row => row.length)) };
+  });
+  let cursor = 0; const laneX = new Map();
+  lanes.forEach(L => { laneX.set(L.room.id, cursor); cursor += L.cols * (NW + COLGAP) - COLGAP + LANE_PAD * 2 + LANEGAP; });
+  const totalW = Math.max(NW, cursor - LANEGAP);
+  const place = () => {
+    const pos = new Map();
+    lanes.forEach(L => {
+      const baseX = laneX.get(L.room.id) + LANE_PAD;
+      L.rows.forEach((row, r) => {
+        const startCol = (L.cols - row.length) / 2;
+        row.forEach((id, i) => pos.set(id, { x: baseX + (startCol + i) * (NW + COLGAP), y: LANE_LABEL_H + r * (NH + ROWGAP) }));
+      });
+    });
+    return pos;
+  };
+  let pos = place();
+  // a few barycenter sweeps within each lane row to reduce edge crossings
+  for (let p = 0; p < 3; p++) {
+    const ix = new Map(); pos.forEach((v, k) => ix.set(k, v.x));
+    lanes.forEach(L => L.rows.forEach(row => {
+      const bary = id => { const nb = [...(fwd.get(id) || []), ...(rev.get(id) || [])].filter(z => ix.has(z)); return nb.length ? nb.reduce((s, z) => s + ix.get(z), 0) / nb.length : ix.get(id); };
+      row.sort((a, b) => bary(a) - bary(b));
+    }));
+    pos = place();
+  }
+  const contentH = LANE_LABEL_H + nRows * (NH + ROWGAP) - ROWGAP;
+  const laneRects = lanes.map(L => ({ title: L.room.title, x: laneX.get(L.room.id), y: 0, w: L.cols * (NW + COLGAP) - COLGAP + LANE_PAD * 2, h: contentH }));
+  return { pos, fwd, rev, contentW: totalW, contentH, laneRects, multiRoom: lanes.length > 1 };
+}
+function byId(nodes, id) { return nodes.find(n => n.id === id); }
+
+function buildGraph(nodes, edges) {
+  const svg = document.getElementById("gsvg");
+  const { pos, fwd, rev, contentW, contentH, laneRects, multiRoom } = layout(nodes, edges);
+  const PAD = 22;
+  let body =
+    `<defs>
+       <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--border-2)"/></marker>
+       <marker id="ar-need" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--info)"/></marker>
+       <marker id="ar-imp" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--warn)"/></marker>
+     </defs><g id="gg" transform="translate(${PAD},${PAD})">`;
+  // room clusters (under everything)
+  if (multiRoom) laneRects.forEach(L => {
+    body += `<rect class="lane" x="${L.x}" y="${L.y}" width="${L.w}" height="${L.h}" rx="12"/>`;
+    body += `<text class="lane-label" x="${L.x + LANE_PAD}" y="17">${esc(L.title)}</text>`;
+  });
+  // edges (under nodes)
+  edges.forEach((e, i) => {
+    const a = pos.get(e.from), b = pos.get(e.to);
+    const sx = a.x + NW / 2, sy = a.y + NH, tx = b.x + NW / 2, ty = b.y, my = (sy + ty) / 2;
+    body += `<path class="edge" data-i="${i}" data-from="${esc(e.from)}" data-to="${esc(e.to)}" marker-end="url(#ar)" d="M${sx},${sy} C ${sx},${my} ${tx},${my} ${tx},${ty}"/>`;
+  });
+  // nodes
+  nodes.forEach(n => {
+    const p = pos.get(n.id), s = STATUS[n.status] || STATUS.planned, f = frac(n), bc = bugsFor(n.id).length;
+    const subParts = [roomTitle(n.room)]; if (n.kind !== "feature") subParts.push(n.kind);
+    body += `<g class="gnode" data-id="${esc(n.id)}" transform="translate(${p.x},${p.y})">
+      <rect class="ring" x="-3" y="-3" width="${NW + 6}" height="${NH + 6}" rx="9"/>
+      <rect class="card" x="0" y="0" width="${NW}" height="${NH}" rx="8"/>
+      <circle cx="14" cy="${NH / 2}" r="5" fill="${s.c}"/>
+      <text class="t" x="26" y="${NH / 2 - 2}">${esc(trunc(n.title, 19))}</text>
+      <text class="s" x="26" y="${NH / 2 + 13}">${esc(trunc(subParts.join(" · "), 24))}${f ? "  " + f : ""}</text>
+      ${bc ? `<g class="bugbadge"><circle cx="${NW - 11}" cy="11" r="8" fill="var(--danger)"/><text x="${NW - 11}" y="14.5" text-anchor="middle" fill="var(--bg)">${bc}</text></g>` : ""}
+    </g>`;
+  });
+  body += `</g>`;
+  svg.innerHTML = body;
+  const gg = svg.querySelector("#gg");
+  const nodeEls = new Map(); svg.querySelectorAll(".gnode").forEach(el => nodeEls.set(el.dataset.id, el));
+  const edgeEls = Array.from(svg.querySelectorAll(".edge"));
+  G = { gg, pos, fwd, rev, contentW: contentW + PAD * 2, contentH: contentH + PAD * 2, nodeEls, edges, edgeEls, tf: { x: 0, y: 0, k: 1 }, userMoved: false };
+  wireSvg(svg);
+  fit();
+}
+function applyTf() { if (G) G.gg.setAttribute("transform", `translate(${G.tf.x},${G.tf.y}) scale(${G.tf.k})`); }
+function fit() {
+  if (!G) return;
+  const svg = document.getElementById("gsvg");
+  const pw = svg.clientWidth, ph = svg.clientHeight;
+  if (pw < 10 || ph < 10) { requestAnimationFrame(fit); return; } // pane not laid out yet
+  const k = clamp(Math.min(pw / G.contentW, ph / G.contentH) * 0.96, 0.2, 1.3);
+  G.tf = { k, x: (pw - G.contentW * k) / 2, y: (ph - G.contentH * k) / 2 };
+  applyTf();
+}
+function wireSvg(svg) {
+  if (svg.__wired) return; svg.__wired = true;
+  // node selection via delegation (suppressed if a drag happened)
+  svg.addEventListener("click", e => {
+    if (svg.__moved) return;
+    const g = e.target.closest(".gnode"); if (g) selectNode(g.dataset.id);
+  });
+  // pan
+  let down = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  svg.addEventListener("mousedown", e => { down = true; svg.__moved = false; sx = e.clientX; sy = e.clientY; ox = G.tf.x; oy = G.tf.y; svg.classList.add("grabbing"); });
+  window.addEventListener("mousemove", e => {
+    if (!down) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) + Math.abs(dy) > 3) { svg.__moved = true; if (G) G.userMoved = true; }
+    G.tf.x = ox + dx; G.tf.y = oy + dy; applyTf();
+  });
+  window.addEventListener("mouseup", () => { down = false; svg.classList.remove("grabbing"); });
+  // zoom toward cursor
+  svg.addEventListener("wheel", e => {
+    e.preventDefault();
+    if (G) G.userMoved = true;
+    const rect = svg.getBoundingClientRect(), mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const k2 = clamp(G.tf.k * (e.deltaY < 0 ? 1.12 : 0.89), 0.2, 2.6);
+    G.tf.x = mx - (mx - G.tf.x) * (k2 / G.tf.k); G.tf.y = my - (my - G.tf.y) * (k2 / G.tf.k); G.tf.k = k2; applyTf();
+  }, { passive: false });
+  // auto-fit while the layout settles and on container resize — until the user takes control
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => { if (G && !G.userMoved) fit(); });
+    ro.observe(svg);
+  }
+}
+function zoomBtn(kind) {
+  if (!G) return;
+  if (kind === "fit") { G.userMoved = false; return fit(); }
+  G.userMoved = true;
+  const svg = document.getElementById("gsvg"), pw = svg.clientWidth / 2, ph = svg.clientHeight / 2;
+  const k2 = clamp(G.tf.k * (kind === "in" ? 1.2 : 0.83), 0.2, 2.6);
+  G.tf.x = pw - (pw - G.tf.x) * (k2 / G.tf.k); G.tf.y = ph - (ph - G.tf.y) * (k2 / G.tf.k); G.tf.k = k2; applyTf();
+}
+function applyHighlight() {
+  if (!G) return;
+  const info = document.getElementById("ginfo");
+  if (!state.userPicked || !sel || !G.nodeEls.has(sel)) {
+    G.nodeEls.forEach(el => el.classList.remove("dim", "sel"));
+    G.edgeEls.forEach(el => { el.classList.remove("dim", "need", "impact"); el.setAttribute("marker-end", "url(#ar)"); });
+    info.classList.remove("show"); return;
+  }
+  const desc = reachable(sel, G.fwd);   // what sel needs (its dependencies)
+  const anc = reachable(sel, G.rev);    // what depends on sel (impacted by a change)
+  const hi = new Set([sel, ...desc, ...anc]);
+  G.nodeEls.forEach((el, id) => { el.classList.toggle("dim", !hi.has(id)); el.classList.toggle("sel", id === sel); });
+  G.edgeEls.forEach(el => {
+    const f = el.dataset.from, t = el.dataset.to;
+    el.classList.remove("dim", "need", "impact");
+    if ((f === sel || desc.has(f)) && desc.has(t)) { el.classList.add("need"); el.setAttribute("marker-end", "url(#ar-need)"); }
+    else if (anc.has(f) && (t === sel || anc.has(t))) { el.classList.add("impact"); el.setAttribute("marker-end", "url(#ar-imp)"); }
+    else { el.classList.add("dim"); el.setAttribute("marker-end", "url(#ar)"); }
+  });
+  const n = data.nodes.find(x => x.id === sel);
+  info.innerHTML = `<b>${esc(n.title)}</b> — <span class="imp">${anc.size}</span> ${anc.size === 1 ? "feature depends" : "features depend"} on it (affected if changed) · it needs <span class="need">${desc.size}</span>.`;
+  info.classList.add("show");
+}
+function graphSig(nodes, edges) {
+  return state.q + "|" + state.room + "|" + [...state.kinds].sort().join(",") + "|" + nodes.map(n => n.id + n.status).join(",") + "|" + edges.length + "|b" + (data.bugs || []).length;
+}
+function renderGraph() {
+  const nodes = visibleNodes(), edges = visibleEdges(nodes);
+  if (!nodes.length) { document.getElementById("gsvg").innerHTML = `<text x="20" y="30" class="s" fill="var(--text-3)">No matches</text>`; G = null; return; }
+  const sig = graphSig(nodes, edges);
+  if (!G || G.sig !== sig) { buildGraph(nodes, edges); G.sig = sig; }
+  applyHighlight();
+}
+
+/* ---------- detail panel (shared) ---------- */
+function col(title, items, clr) {
+  const body = (items && items.length)
+    ? `<ul>${items.map(i => `<li><span style="color:${clr}">•</span><span>${esc(i)}</span></li>`).join("")}</ul>`
+    : `<div class="empty">—</div>`;
+  return `<div class="col"><h4 style="color:${clr}">${title}</h4>${body}</div>`;
+}
+function renderDetail() {
+  const el = document.getElementById("detail");
+  const n = data.nodes.find(x => x.id === sel) || data.nodes[0];
+  if (!n) { el.innerHTML = "<p>No features.</p>"; return; }
+  sel = n.id;
+  const s = STATUS[n.status] || STATUS.planned;
+  let cps;
+  if (n.verification && n.verification.checkpoints && n.verification.checkpoints.length) {
+    cps = n.verification.checkpoints.map(c => `<div class="cp">${ICON[c.state] || ICON["not-run"]}
+      <div><div>${esc(c.label)}</div>${c.surface || c.type ? `<div class="meta">${esc([c.type, c.surface].filter(Boolean).join(" · "))}</div>` : ""}</div></div>`).join("");
+  } else {
+    cps = `<div class="empty" style="color:var(--text-3);font-style:italic;font-size:13px">No verification contract yet${n.status === "built" ? " — run /cover or /verify --bootstrap" : ""}.</div>`;
+  }
+  const deps = (n.dependsOn || []).map(id => {
+    const t = data.nodes.find(x => x.id === id);
+    return `<button data-goto="${esc(id)}">${esc(t ? t.title : id)}</button>`;
+  }).join("");
+  const bugs = bugsFor(n.id);
+  const bugSec = bugs.length ? `<div class="sec"></div><div class="sec-h">Bugs <span>${bugs.length} open</span></div>` +
+    bugs.map(b => `<div class="bugrow"><span class="bdot" style="background:${BUGCLR[b.status] || "var(--text-3)"}"></span><a href=".github/bugs/${esc(b.id)}.md">${esc(b.title)}</a><span class="bmeta">${esc(b.status)}</span></div>`).join("") : "";
+  const files = (n.artifacts && n.artifacts.files) || {};
+  const fileLinks = Object.entries(files).map(([role, path]) => `<a href="${esc(path)}">${esc(role)}</a>`).join("");
+  const specLink = n.artifacts && n.artifacts.spec ? `<a href="${esc(n.artifacts.spec)}">${esc(n.artifacts.spec)}</a>` : "";
+
+  el.innerHTML = `
+    <div class="crumb">
+      <span>${esc(roomTitle(n.room))} ›</span>
+      <span class="badge" style="background:${s.bg};color:${s.c}">${s.label}</span>
+      ${n.verification ? `<span style="color:var(--text-3)">${esc(n.verification.source)}-derived · last run ${esc(n.verification.lastVerified || "never")}</span>` : ""}
+    </div>
+    <div class="dtitle">${esc(n.title)}</div>
+    <p class="summary" id="sumP">${esc(state.expand && n.detail ? n.detail : n.summary)}</p>
+    ${n.detail ? `<button class="more" id="moreBtn">${state.expand ? "Show less" : "Show full"}</button>` : ""}
+    <div class="sec"></div>
+    <div class="sec-h">Verification checkpoints ${frac(n) ? `<span>${frac(n)} passing</span>` : ""}</div>
+    ${cps}
+    <div class="sec"></div>
+    <div class="sec-h">Todo board</div>
+    <div class="board">
+      ${col("Done", n.todo && n.todo.done, "var(--ok)")}
+      ${col("Doing", n.todo && n.todo.doing, "var(--warn)")}
+      ${col("Next", n.todo && n.todo.next, "var(--info)")}
+    </div>
+    ${(n.surfaces && n.surfaces.length) ? `<div class="sec"></div><div class="sec-h">Surfaces</div>
+      <div class="links">${n.surfaces.map(x => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
+    ${bugSec}
+    <div class="sec"></div>
+    <div class="links">${specLink}${fileLinks}</div>
+    ${deps ? `<div style="font-size:11.5px;color:var(--text-3);margin:10px 0 4px">depends on</div><div class="deps">${deps}</div>` : ""}
+  `;
+  const mb = document.getElementById("moreBtn");
+  if (mb) mb.onclick = () => { state.expand = !state.expand; renderDetail(); };
+  el.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => selectNode(b.dataset.goto));
+}
+
+/* ---------- chrome ---------- */
+function renderChrome() {
+  document.getElementById("meta").textContent =
+    `${data.nodes.length} nodes · generated ${data.generated || "—"}` +
+    (data.framework && data.framework.version ? ` · Agent0 ${data.framework.version}` : "");
+  const st = data.stats || {};
+  const cards = [
+    ["Features", st.features ?? data.nodes.filter(n => n.kind === "feature").length],
+    ["Verified", st.verified ?? data.nodes.filter(n => n.status === "verified").length],
+    ["In progress", st.inProgress ?? data.nodes.filter(n => n.status === "in-progress").length],
+    ["Rooms", st.rooms ?? roomsSorted().filter(r => r.id !== null).length],
+    ["Open bugs", st.openBugs ?? (data.bugs ? data.bugs.filter(b => b.status === "open").length : 0)]
+  ];
+  document.getElementById("stats").innerHTML = cards.map(([k, v]) => `<span class="chip"><b>${v}</b> ${k}</span>`).join("");
+
+  document.querySelectorAll("#viewseg button").forEach(b => {
+    b.classList.toggle("on", b.dataset.v === state.view);
+    b.onclick = () => { if (state.view !== b.dataset.v) { state.view = b.dataset.v; render(); } };
+  });
+  document.getElementById("graphhint").style.display = state.view === "graph" ? "" : "none";
+
+  const rf = document.getElementById("roomf");
+  rf.innerHTML = `<option value="">All rooms</option>` +
+    roomsSorted().filter(r => r.id !== null).map(r => `<option value="${esc(r.id)}">${esc(r.title)}</option>`).join("");
+  rf.value = state.room;
+  rf.onchange = () => { state.room = rf.value; render(); };
+
+  const kindSet = [...new Set(data.nodes.map(n => n.kind))];
+  document.getElementById("kinds").innerHTML = kindSet.map(k => `<button class="kbtn ${state.kinds.has(k) ? "on" : ""}" data-k="${esc(k)}">${esc(k)}</button>`).join("");
+  document.querySelectorAll(".kbtn").forEach(b => b.onclick = () => { const k = b.dataset.k; state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k); render(); });
+
+  const q = document.getElementById("search");
+  q.value = state.q;
+  q.oninput = () => { state.q = q.value; state.view === "graph" ? renderGraph() : renderTree(); };
+
+  document.querySelectorAll(".zoom button").forEach(b => b.onclick = () => zoomBtn(b.dataset.z));
+}
+
+function render() {
+  renderChrome();
+  document.getElementById("grid").className = "grid " + (state.view === "graph" ? "grid-graph" : "grid-tree");
+  document.getElementById("tree").style.display = state.view === "graph" ? "none" : "";
+  document.getElementById("graphpane").style.display = state.view === "graph" ? "" : "none";
+  if (state.view === "graph") renderGraph(); else renderTree();
+  renderDetail();
+}
+
+function load(d, note) {
+  data = d; sel = (d.nodes[0] || {}).id || null; G = null; state.userPicked = false;
+  document.getElementById("banner").innerHTML = note ? `<div class="banner">${note}</div>` : "";
+  render();
+}
+
+async function boot() {
+  for (const src of ["FEATURE_TREE.json", "FEATURE_TREE.example.json"]) {
+    try {
+      const r = await fetch(src, { cache: "no-store" });
+      if (r.ok) { load(await r.json(), src === "FEATURE_TREE.example.json"
+        ? `Showing <b>FEATURE_TREE.example.json</b> — no real <code>FEATURE_TREE.json</code> found yet. Run <code>/feature-tree</code> to generate yours.` : ""); return; }
+    } catch (e) { /* file:// or missing — try next */ }
+  }
+  load(DEMO, `Showing a <b>built-in demo</b> (opened via file://, so the browser blocked reading local JSON). Drop your <code>FEATURE_TREE.json</code> onto the page, or serve this folder over http (e.g. <code>python -m http.server</code>) to auto-load it.`);
+}
+
+const root = document.getElementById("root");
+["dragover", "dragenter"].forEach(e => root.addEventListener(e, ev => { ev.preventDefault(); root.classList.add("drop-on"); }));
+["dragleave", "drop"].forEach(e => root.addEventListener(e, ev => { ev.preventDefault(); root.classList.remove("drop-on"); }));
+root.addEventListener("drop", ev => {
+  const f = ev.dataTransfer.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => { try { load(JSON.parse(reader.result), `Loaded <b>${esc(f.name)}</b>.`); } catch (e) { alert("Not valid JSON: " + e.message); } };
+  reader.readAsText(f);
+});
+window.addEventListener("resize", () => { if (state.view === "graph" && G && !G.userMoved) fit(); });
+
+boot();
+</script>
+</body>
+</html>
