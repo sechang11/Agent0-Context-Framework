@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14
+
+- `canvas-server.cjs` now binds `0.0.0.0` by default (was Node's default `::`), overridable via `HOST`. Fixes Railway / Render / Fly **"Application failed to respond"** — those platforms route to the container over IPv4 and expect the app on `0.0.0.0:$PORT`. Reminder for that error: it means the process isn't listening as expected — usual causes are (1) `CANVAS_PASSWORD` not set so the server exits on boot, (2) the deploy's Root Directory not pointing at the folder with `canvas.html` + `FEATURE_TREE.json`, or (3) the old `::` binding this release fixes.
+
+
 ## 2026-06-13
 
 - Added `canvas-server.cjs` — a portable, **auth-gated** way to put the feature canvas **online** for any project, behind a password, **without touching the app**. Zero dependencies (Node built-ins only), so it runs on any Node host (Railway / Render / Fly / a VPS) or locally. It serves **only** `canvas.html` + `FEATURE_TREE.json` from an allowlist — app source, specs, and secrets are never exposed even though it runs in the project dir. Refuses to start without `CANVAS_PASSWORD`; HTTP Basic Auth on every request.

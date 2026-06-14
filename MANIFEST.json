@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-13",
+  "version": "2026-06-14",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -109,6 +109,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14",
+      "notes": [
+        "canvas-server.cjs now binds 0.0.0.0 by default (was Node's default ::), overridable via HOST. Fixes Railway/Render/Fly 'Application failed to respond' — those platforms route to the container over IPv4 and expect the app on 0.0.0.0:$PORT. Reminder for that error: it means the process isn't listening as expected — the usual causes are (1) CANVAS_PASSWORD not set so the server exits on boot, (2) the deploy's Root Directory not pointing at the folder with canvas.html + FEATURE_TREE.json, or (3) the old :: binding this release fixes."
+      ]
+    },
     {
       "version": "2026-06-13",
       "notes": [

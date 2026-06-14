@@ -102,7 +102,8 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`[canvas] serving ${ROOT} on port ${PORT} — basic auth on (user "${USER}").`);
+const HOST = process.env.HOST || '0.0.0.0'; // bind all interfaces — required by Railway/Render/Fly/containers
+server.listen(PORT, HOST, () => {
+  console.log(`[canvas] serving ${ROOT} on ${HOST}:${PORT} — basic auth on (user "${USER}").`);
   console.log('[canvas] only canvas.html + FEATURE_TREE.json are exposed; nothing else.');
 });
