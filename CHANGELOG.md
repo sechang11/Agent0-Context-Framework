@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14b
+
+- `canvas.html`: the details panel now has a **draggable divider** — grab the handle between the canvas and the panel to widen it for reading or narrow it to give the graph more room. The graph re-fits live as you drag. Clamped 300–760px, hidden on narrow/stacked layouts. Pairs with the existing collapse toggle.
+
+
 ## 2026-06-14a
 
 - `canvas.html` layout overhaul for using it as the primary view: full-bleed width (no `max-width`), the graph/tree pane fills the viewport height (`calc(100vh - 188px)`), and the right detail panel is now a fixed-width, independently-scrolling sidebar. Added a **"Hide details ›" / "‹ Show details"** toolbar toggle that collapses the panel so the canvas takes the full width; collapsing re-fits the graph to the new width. No change to the data or the graph itself.
