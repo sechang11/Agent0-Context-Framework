@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14",
+  "version": "2026-06-14a",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -109,6 +109,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14a",
+      "notes": [
+        "canvas.html layout overhaul for using it as the primary view: full-bleed width (no max-width), the graph/tree pane fills the viewport height (calc(100vh - 188px)), and the right detail panel is now a fixed-width, independently-scrolling sidebar. Added a 'Hide details ›' / '‹ Show details' toolbar toggle that collapses the panel so the canvas takes the full width; collapsing re-fits the graph to the new width. No behavior change to the data or the graph itself."
+      ]
+    },
     {
       "version": "2026-06-14",
       "notes": [

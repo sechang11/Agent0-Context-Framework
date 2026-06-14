@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14a
+
+- `canvas.html` layout overhaul for using it as the primary view: full-bleed width (no `max-width`), the graph/tree pane fills the viewport height (`calc(100vh - 188px)`), and the right detail panel is now a fixed-width, independently-scrolling sidebar. Added a **"Hide details ›" / "‹ Show details"** toolbar toggle that collapses the panel so the canvas takes the full width; collapsing re-fits the graph to the new width. No change to the data or the graph itself.
+
+
 ## 2026-06-14
 
 - `canvas-server.cjs` now binds `0.0.0.0` by default (was Node's default `::`), overridable via `HOST`. Fixes Railway / Render / Fly **"Application failed to respond"** — those platforms route to the container over IPv4 and expect the app on `0.0.0.0:$PORT`. Reminder for that error: it means the process isn't listening as expected — usual causes are (1) `CANVAS_PASSWORD` not set so the server exits on boot, (2) the deploy's Root Directory not pointing at the folder with `canvas.html` + `FEATURE_TREE.json`, or (3) the old `::` binding this release fixes.
