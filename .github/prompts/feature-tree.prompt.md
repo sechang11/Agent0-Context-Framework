@@ -44,6 +44,7 @@ This is one of two ways the file gets updated:
 2. The target files are `${MAIN_TREE}/FEATURE_TREE.md` and `${MAIN_TREE}/FEATURE_TREE.json`.
 3. The specs directory is `${MAIN_TREE}/.github/specs/`.
 4. The rooms registry (optional) is `${MAIN_TREE}/.github/specs/_rooms.yml`. Read it if present — it enriches rooms with title/icon/order/summary. If absent, rooms are derived from the distinct `room` values across features.
+5. The stub-nodes registry (optional) is `${MAIN_TREE}/.github/specs/_nodes.yml`. Read it if present — it lists lightweight nodes (id/kind/room/summary/depends_on/status) that have NO spec directory. These are the "in-between" tier: things on the map that aren't spec'd or covered. Emit each as a node in Phase 3b (see there).
 
 If `${MAIN_TREE}/.github/specs/` doesn't exist (project has no features yet), write minimal placeholder files for both (see Phase 4) and exit cleanly.
 
@@ -218,7 +219,7 @@ Top-level keys:
 - `generated`: the same `{YYYY-MM-DD HH:MM}` timestamp as the Markdown.
 - `framework`: `{ "version": {installed_version}, "mode": {mode} }`.
 - `rooms`: one entry per room. Start from `_rooms.yml` (if present) for title/icon/order/summary. Then ensure every distinct `room` value referenced by a feature exists — auto-create missing ones with `title` = titleized id and no icon. Don't emit a room that has no features and isn't in `_rooms.yml`.
-- `nodes`: one entry per feature directory (Phase 2/2a). Map fields straight across: `id`, `kind`, `room` (null if ungrouped), `title`, `summary`, `detail`, `status`, `surfaces`, `invariants`, `dependsOn` (from `depends_on`), `todo`, and `artifacts`.
+- `nodes`: one entry per feature directory (Phase 2/2a), PLUS one per stub node from `_nodes.yml`. For feature directories, map fields straight across: `id`, `kind`, `room` (null if ungrouped), `title`, `summary`, `detail`, `status`, `surfaces`, `invariants`, `dependsOn` (from `depends_on`), `todo`, and `artifacts`. For **stub nodes** (from `_nodes.yml`): emit `id`, `kind`, `room`, `title`, `summary`, `dependsOn` (from `depends_on`), `status` (default `built`), `verification: null`, empty `todo`/`invariants`/`surfaces`, and `artifacts: { files: {} }`. **A stub whose id matches a real spec directory is dropped** — the spec wins (don't emit both).
   - `verification`: `null` if no `verification.md`. Otherwise `{ source, statusRaw, lastVerified, passing, total, checkpoints[] }` where each checkpoint is `{ id, label, type, surface, state, pendingReason? }`.
   - `artifacts`: `{ "spec": "{ABS path to .github/specs/{id}/}", "files": { role: "{ABS path}" } }` — include only files that exist, keyed by role (`requirements`, `design`, `tasks`, `verification`, `ui`). Use absolute paths under `${MAIN_TREE}` (same rule as Markdown links — so Claude Code and the canvas can open them).
 - `edges`: flatten every node's `dependsOn` into `{ "from": node.id, "to": dep, "type": "depends-on" }`. Skip edges whose `to` isn't a known node id, but keep the id in the node's `dependsOn` (a dangling dependency is still information).

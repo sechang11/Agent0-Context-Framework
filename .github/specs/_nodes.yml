@@ -1,0 +1,43 @@
+# Stub nodes registry — OPTIONAL.
+#
+# The lightweight tier BETWEEN a full /spec and a /cover. A stub node is just a topology entry:
+# it puts something on the feature canvas WITHOUT a spec directory, requirements, design, or
+# verification — no contract, no checkpoints, just "this exists, here's the layer it's in, the
+# room it belongs to, and what it depends on."
+#
+# THREE TIERS OF FIDELITY (the precision dial):
+#   1. STUB node (here) — declared id / kind / room / summary / depends_on. No spec, no code read.
+#                         The cheap way to map the long tail so the canvas reflects the WHOLE app.
+#   2. /cover           — a code-derived verification.md (a snapshot of CURRENT behavior, with
+#                         checkpoints). Use it to pin / regression-test something that already exists.
+#   3. /spec            — full requirements + design + tasks + verification. The contract for
+#                         pressing, actively-built work.
+#
+# Promote a stub to a /cover or /spec when it earns the detail. A stub whose id later gets a real
+# .github/specs/{id}/ directory is SUPERSEDED by that spec (the spec wins; remove the stub).
+#
+# Each node:
+#   id          kebab-case, stable (edges reference it)
+#   kind        page | component (frontend) · endpoint | service (backend) · schema (data) ·
+#               integration (external) · feature (vertical slice)
+#   room        the domain it belongs to (domain-first: a table lives in its domain's room)
+#   title       display name
+#   summary     one line
+#   depends_on  ids it depends on (optional)
+#   status      planned | in-progress | built | verified  (default: built — it exists in code)
+#
+# PROJECT: list your stub nodes below (the examples are commented out). /feature-tree merges these
+# into the canvas alongside your spec'd features and covers.
+
+nodes: []
+  # - id: users-table
+  #   kind: schema
+  #   room: auth
+  #   title: users
+  #   summary: id, email, password_hash, created_at.
+  # - id: leaderboard-page
+  #   kind: page
+  #   room: social
+  #   title: Leaderboard
+  #   summary: Ranked traders by trailing P&L.
+  #   depends_on: [leaderboard-service]

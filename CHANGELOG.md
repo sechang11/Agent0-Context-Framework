@@ -7,6 +7,13 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14e
+
+- **Group-by toggle** in `canvas.html`: switch between grouping by **Room** (domain swimlanes — default) and by **Layer** (Frontend / Backend / Data / External lanes, and the same headings in the Tree). Group-by-Layer is the "flat by type" view — the **Data** group is your whole table list, **Frontend** every page. Verified at 169 nodes.
+
+- **Stub nodes** — the lightweight tier **between `/spec` and `/cover`.** New optional `.github/specs/_nodes.yml` lets you declare bare nodes (`id`/`kind`/`room`/`summary`/`depends_on`/`status`) with **no spec directory** — just "this exists, here's its layer and what it depends on." The three tiers: **stub** (declared topology, no code read) → **`/cover`** (code-derived verification snapshot) → **`/spec`** (full contract). Use stubs to map the long tail of an app cheaply so the canvas reflects the whole site; promote to cover/spec when it earns the detail. `/feature-tree` merges `_nodes.yml` nodes alongside specs (a spec dir with the same id supersedes its stub).
+
+
 ## 2026-06-14d
 
 - **Layer-colored nodes.** `canvas.html` now shows frontend vs backend at a glance: the node's **status** is the dot (green/blue/amber/gray); the node's **layer** is the **border color** — frontend (`page`/`component`) = purple, backend (`endpoint`/`service`) = teal, data (`schema`) = amber, external = gray, feature (vertical slice) = neutral. The same color tints the tree kind-tag and the detail-panel layer label; a "border = layer" legend decodes it.

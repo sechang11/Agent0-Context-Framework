@@ -155,6 +155,9 @@
     <span class="seg" id="viewseg">
       <button data-v="tree">Tree</button><button data-v="graph">Graph</button>
     </span>
+    <span class="seg" id="groupseg" title="Group by domain (rooms) or by layer (frontend/backend/data)">
+      <button data-g="room">Rooms</button><button data-g="layer">Layers</button>
+    </span>
     <input type="search" id="search" placeholder="Search features…" />
     <select id="roomf"><option value="">All rooms</option></select>
     <div class="kinds" id="kinds"></div>
@@ -255,7 +258,7 @@ const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 let data = null, sel = null;
-const state = { q: "", room: "", kinds: new Set(), expand: false, view: "graph", userPicked: false, panel: "open", panelW: 400 };
+const state = { q: "", room: "", kinds: new Set(), expand: false, view: "graph", userPicked: false, panel: "open", panelW: 400, groupBy: "room" };
 
 /* ---------- shared selection ---------- */
 function selectNode(id) {
@@ -286,6 +289,15 @@ function roomsSorted() {
   return known;
 }
 function roomTitle(id) { const r = (data.rooms || []).find(x => x.id === id); return r ? r.title : (id ? titleize(id) : "Ungrouped"); }
+function groupKeyOf(n) { return state.groupBy === "layer" ? layerOf(n.kind) : (n.room || null); }
+function groupsForView() {
+  if (state.groupBy === "layer") {
+    const order = ["frontend", "backend", "data", "external", "feature"];
+    const present = new Set(data.nodes.map(n => layerOf(n.kind)));
+    return order.filter(l => present.has(l)).map(l => ({ id: l, title: LAYER_LABEL[l] }));
+  }
+  return roomsSorted().map(r => ({ id: r.id, title: r.title }));
+}
 function bugsFor(id) { return (data.bugs || []).filter(b => b.node === id); }
 const BUGCLR = { open: "var(--danger)", "in-progress": "var(--warn)" };
 const LAYER_OF = { page: "frontend", component: "frontend", endpoint: "backend", service: "backend", schema: "data", integration: "external", feature: "feature" };
@@ -298,10 +310,10 @@ function layerColor(kind) { return LAYER_COLOR[layerOf(kind)]; }
 function renderTree() {
   const el = document.getElementById("tree");
   let h = "";
-  roomsSorted().forEach(r => {
-    const ns = data.nodes.filter(n => n.room === r.id && passFilter(n));
+  groupsForView().forEach(g => {
+    const ns = data.nodes.filter(n => groupKeyOf(n) === g.id && passFilter(n));
     if (!ns.length) return;
-    h += `<div class="room-h">${esc(r.title)} <small>${ns.length}</small></div>`;
+    h += `<div class="room-h">${esc(g.title)} <small>${ns.length}</small></div>`;
     ns.forEach(n => {
       const s = STATUS[n.status] || STATUS.planned, f = frac(n), bc = bugsFor(n.id).length;
       h += `<button class="node ${n.id === sel ? "sel" : ""}" data-id="${esc(n.id)}">
@@ -359,12 +371,12 @@ function layout(nodes, edges) {
   const maxD = Math.max(0, ...nodes.map(n => depth.get(n.id)));
   const nRows = maxD + 1;
   const rowOf = id => maxD - depth.get(id);                       // 0 = most-dependent (top)
-  const rs = roomsSorted().filter(r => nodes.some(n => n.room === r.id));
-  const lanes = rs.map(r => {
+  const rs = groupsForView().filter(g => nodes.some(n => groupKeyOf(n) === g.id));
+  const lanes = rs.map(g => {
     const rows = Array.from({ length: nRows }, () => []);
-    nodes.filter(n => n.room === r.id).forEach(n => rows[rowOf(n.id)].push(n.id));
+    nodes.filter(n => groupKeyOf(n) === g.id).forEach(n => rows[rowOf(n.id)].push(n.id));
     rows.forEach(row => row.sort((a, b) => byId(nodes, a).title > byId(nodes, b).title ? 1 : -1));
-    return { room: r, rows, cols: Math.max(1, ...rows.map(row => row.length)) };
+    return { room: g, rows, cols: Math.max(1, ...rows.map(row => row.length)) };
   });
   let cursor = 0; const laneX = new Map();
   lanes.forEach(L => { laneX.set(L.room.id, cursor); cursor += L.cols * (NW + COLGAP) - COLGAP + LANE_PAD * 2 + LANEGAP; });
@@ -512,7 +524,7 @@ function applyHighlight() {
   info.classList.add("show");
 }
 function graphSig(nodes, edges) {
-  return state.q + "|" + state.room + "|" + [...state.kinds].sort().join(",") + "|" + nodes.map(n => n.id + n.status).join(",") + "|" + edges.length + "|b" + (data.bugs || []).length;
+  return state.q + "|" + state.room + "|" + [...state.kinds].sort().join(",") + "|" + nodes.map(n => n.id + n.status).join(",") + "|" + edges.length + "|b" + (data.bugs || []).length + "|g" + state.groupBy;
 }
 function renderGraph() {
   const nodes = visibleNodes(), edges = visibleEdges(nodes);
@@ -608,6 +620,10 @@ function renderChrome() {
     b.onclick = () => { if (state.view !== b.dataset.v) { state.view = b.dataset.v; render(); } };
   });
   document.getElementById("graphhint").style.display = state.view === "graph" ? "" : "none";
+  document.querySelectorAll("#groupseg button").forEach(b => {
+    b.classList.toggle("on", b.dataset.g === state.groupBy);
+    b.onclick = () => { if (state.groupBy !== b.dataset.g) { state.groupBy = b.dataset.g; render(); } };
+  });
 
   const rf = document.getElementById("roomf");
   rf.innerHTML = `<option value="">All rooms</option>` +
