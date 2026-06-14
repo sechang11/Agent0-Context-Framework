@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14c",
+  "version": "2026-06-14d",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -109,6 +109,13 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14d",
+      "notes": [
+        "canvas.html: nodes are now LAYER-COLORED so frontend reads differently from backend at a glance. The node's STATUS is the dot (green/blue/amber/gray); the node's LAYER is the border color — frontend (page/component) = purple, backend (endpoint/service) = teal, data (schema) = amber, external = gray, feature (vertical slice) = neutral. Same border color tints the tree kind-tag and the detail-panel layer label; a 'border = layer' legend decodes it.",
+        "User-authored board items: tasks.md (and any feature .md) can now carry free-form `## Doing` and `## Next` sections — plain bullets, no PR-sizing — that merge into the canvas board alongside the formal checkbox tasks. A place to queue 'what I'm doing now' and 'what's next' without writing formal tasks. /feature-tree merges both sources (dedup); _template/tasks.md and the /spec inline template ship the stub sections."
+      ]
+    },
     {
       "version": "2026-06-14c",
       "notes": [

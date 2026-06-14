@@ -106,10 +106,18 @@ Order the tasks so the system stays working at each step. Each task is small eno
 
 Use checkbox state — it drives the feature canvas's done/doing/next board: `- [ ]` = next, `- [~]` = doing, `- [x]` = done. New specs start every task at `- [ ]`.
 
+The optional `## Doing` / `## Next` sections below are the user's free-form queue (plain bullets, no PR-sizing) — they merge into the same canvas board. Include them as empty stubs so the user has a place to jot.
+
 ## Tasks
 - [ ] **[component]** task description
 - [ ] **[component]** task description
 - [ ] ...
+
+## Doing
+- (what you're actively working on)
+
+## Next
+- (queued / ideas to come back to)
 
 ## Test plan
 - unit tests covering ...

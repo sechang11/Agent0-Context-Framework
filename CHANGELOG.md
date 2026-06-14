@@ -7,6 +7,13 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14d
+
+- **Layer-colored nodes.** `canvas.html` now shows frontend vs backend at a glance: the node's **status** is the dot (green/blue/amber/gray); the node's **layer** is the **border color** — frontend (`page`/`component`) = purple, backend (`endpoint`/`service`) = teal, data (`schema`) = amber, external = gray, feature (vertical slice) = neutral. The same color tints the tree kind-tag and the detail-panel layer label; a "border = layer" legend decodes it.
+
+- **User-authored board items.** `tasks.md` (and any feature `.md`) can now carry free-form `## Doing` and `## Next` sections — plain bullets, no PR-sizing — that merge into the canvas board alongside the formal checkbox tasks. A place to queue "what I'm doing now" and "what's next" without writing formal tasks. `/feature-tree` merges both sources (deduped); the `_template/tasks.md` and `/spec` inline templates ship the stub sections.
+
+
 ## 2026-06-14c
 
 - **Layers.** A room is a vertical **domain** (auth, trading, admin) that spans frontend + backend + data; the **layer** is the `kind`. Expanded the kind vocabulary to make layers explicit: `page`/`component` = frontend, `endpoint`/`service` = backend, `schema` = data, `integration` = external, `feature` = a vertical slice. `depends_on` is the cross-layer wiring — a `page` depends_on the endpoints/services it calls, which depend_on schemas. The canvas shows each node's layer in the detail panel; the kind filter toggles layers; the dependency graph + impact-highlight answer "which backend pieces serve which frontend pieces." (schema enum + `feature-tree.prompt` + `canvas.html`).

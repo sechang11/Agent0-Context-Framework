@@ -10,6 +10,7 @@
     --text: #1f1e1b; --text-2: #5f5e5a; --text-3: #8a887f;
     --border: rgba(0,0,0,.12); --border-2: rgba(0,0,0,.22);
     --ok: #1d9e75; --info: #378add; --warn: #ba7517; --muted: #b4b2a9; --danger: #e24b4a;
+    --l-frontend: #7c5cd0; --l-backend: #0d9488; --l-data: #b45309; --l-external: #6b7280; --l-feature: #9aa0a6;
     --radius: 10px; --radius-sm: 7px;
   }
   @media (prefers-color-scheme: dark) {
@@ -18,6 +19,7 @@
       --text: #ecebe6; --text-2: #b4b2a9; --text-3: #888780;
       --border: rgba(255,255,255,.12); --border-2: rgba(255,255,255,.26);
       --ok: #5dcaa5; --info: #85b7eb; --warn: #ef9f27; --muted: #5f5e5a; --danger: #f09595;
+      --l-frontend: #b9a5ee; --l-backend: #5eead4; --l-data: #fbbf73; --l-external: #9ca3af; --l-feature: #8f8d86;
     }
   }
   * { box-sizing: border-box; }
@@ -47,6 +49,7 @@
   .seg button + button { border-left: 1px solid var(--border); }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); margin-bottom: 14px; }
   .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 5px; }
+  .ldot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid; background: transparent; display: inline-block; vertical-align: middle; margin-right: 5px; }
   .grid { display: grid; gap: 14px; align-items: start; position: relative; }
   .grid-tree { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); }
   .grid-graph { grid-template-columns: minmax(0, 1fr) var(--panel-w, 400px); }
@@ -75,7 +78,7 @@
   svg.graph { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
   svg.graph.grabbing { cursor: grabbing; }
   .gnode { cursor: pointer; }
-  .gnode rect.card { fill: var(--surface); stroke: var(--border-2); stroke-width: 1.2; }
+  .gnode rect.card { fill: var(--surface); }
   .gnode text.t { font: 500 12.5px -apple-system, system-ui, sans-serif; fill: var(--text); }
   .gnode text.s { font: 400 10.5px -apple-system, system-ui, sans-serif; fill: var(--text-3); }
   .gnode.dim { opacity: .16; }
@@ -158,11 +161,16 @@
     <button id="paneltoggle" class="kbtn" style="margin-left:auto">Hide details ›</button>
   </div>
   <div class="legend">
+    <span style="color:var(--text-3)">dot = status</span>
     <span><span class="dot" style="background:var(--ok)"></span>verified</span>
     <span><span class="dot" style="background:var(--info)"></span>built</span>
     <span><span class="dot" style="background:var(--warn)"></span>in progress</span>
     <span><span class="dot" style="background:var(--muted)"></span>planned</span>
-    <span id="graphhint" style="color:var(--text-3)">· in Graph: click a node to see what depends on it</span>
+    <span style="color:var(--text-3);margin-left:8px">border = layer</span>
+    <span><span class="ldot" style="border-color:var(--l-frontend)"></span>frontend</span>
+    <span><span class="ldot" style="border-color:var(--l-backend)"></span>backend</span>
+    <span><span class="ldot" style="border-color:var(--l-data)"></span>data</span>
+    <span id="graphhint" style="color:var(--text-3)">· click a node to see what depends on it</span>
   </div>
   <div class="grid grid-graph" id="grid">
     <div class="leftcell">
@@ -282,7 +290,9 @@ function bugsFor(id) { return (data.bugs || []).filter(b => b.node === id); }
 const BUGCLR = { open: "var(--danger)", "in-progress": "var(--warn)" };
 const LAYER_OF = { page: "frontend", component: "frontend", endpoint: "backend", service: "backend", schema: "data", integration: "external", feature: "feature" };
 const LAYER_LABEL = { frontend: "Frontend", backend: "Backend", data: "Data", external: "External", feature: "Feature" };
+const LAYER_COLOR = { frontend: "var(--l-frontend)", backend: "var(--l-backend)", data: "var(--l-data)", external: "var(--l-external)", feature: "var(--l-feature)" };
 function layerOf(kind) { return LAYER_OF[kind] || "feature"; }
+function layerColor(kind) { return LAYER_COLOR[layerOf(kind)]; }
 
 /* ---------- tree view ---------- */
 function renderTree() {
@@ -298,7 +308,7 @@ function renderTree() {
         <span class="dot" style="background:${s.c}"></span>
         <span class="nm">${esc(n.title)}</span>
         ${bc ? `<span class="bug">${bc}</span>` : ""}
-        ${n.kind !== "feature" ? `<span class="kind-tag">${esc(n.kind)}</span>` : ""}
+        ${n.kind !== "feature" ? `<span class="kind-tag" style="color:${layerColor(n.kind)};border-color:${layerColor(n.kind)}">${esc(n.kind)}</span>` : ""}
         ${f ? `<span class="frac">${f}</span>` : ""}
       </button>`;
     });
@@ -413,7 +423,7 @@ function buildGraph(nodes, edges) {
     const subParts = [roomTitle(n.room)]; if (n.kind !== "feature") subParts.push(n.kind);
     body += `<g class="gnode" data-id="${esc(n.id)}" transform="translate(${p.x},${p.y})">
       <rect class="ring" x="-3" y="-3" width="${NW + 6}" height="${NH + 6}" rx="9"/>
-      <rect class="card" x="0" y="0" width="${NW}" height="${NH}" rx="8"/>
+      <rect class="card" x="0" y="0" width="${NW}" height="${NH}" rx="8" stroke="${layerColor(n.kind)}" stroke-width="1.7"/>
       <circle cx="14" cy="${NH / 2}" r="5" fill="${s.c}"/>
       <text class="t" x="26" y="${NH / 2 - 2}">${esc(trunc(n.title, 19))}</text>
       <text class="s" x="26" y="${NH / 2 + 13}">${esc(trunc(subParts.join(" · "), 24))}${f ? "  " + f : ""}</text>
@@ -548,7 +558,7 @@ function renderDetail() {
 
   el.innerHTML = `
     <div class="crumb">
-      <span>${esc(roomTitle(n.room))} › ${esc(LAYER_LABEL[layerOf(n.kind)])}${n.kind !== "feature" ? " · " + esc(n.kind) : ""}</span>
+      <span>${esc(roomTitle(n.room))} › <span style="color:${layerColor(n.kind)};font-weight:500">${esc(LAYER_LABEL[layerOf(n.kind)])}</span>${n.kind !== "feature" ? " · " + esc(n.kind) : ""}</span>
       <span class="badge" style="background:${s.bg};color:${s.c}">${s.label}</span>
       ${n.verification ? `<span style="color:var(--text-3)">${esc(n.verification.source)}-derived · last run ${esc(n.verification.lastVerified || "never")}</span>` : ""}
     </div>
