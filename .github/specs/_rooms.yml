@@ -1,40 +1,95 @@
-# Rooms registry — OPTIONAL.
+# Rooms registry — OPTIONAL, but recommended.
 #
-# A "room" groups feature nodes into a domain / page-group / service for the feature
-# canvas. Each feature declares which room it belongs to via `room:` in its
-# verification.md frontmatter (see the Topology block in any verification.md, or
-# .github/specs/_template/requirements.md).
+# A "room" groups feature nodes into a DOMAIN for the feature canvas — a vertical slice of
+# the product, NOT a layer. A room spans frontend + backend + data: e.g. "auth" is the login
+# page (frontend) + the auth endpoints (backend) + the auth tables (data), together.
 #
-# This file is OPTIONAL. If it's absent, /feature-tree still builds rooms by collecting
-# the distinct `room` values across all features and titleizing the id. This file only
-# adds polish that can't be inferred:
+#   - The ROOM is the domain  ........ declared per feature via `room:` (see _template/requirements.md)
+#   - The LAYER is the `kind` ......... page/component = frontend · endpoint/service = backend ·
+#                                       schema = data · integration = external · feature = vertical slice
+#   - `depends_on` is the wiring ...... a page depends_on the endpoints it calls; an endpoint
+#                                       depends_on its services + schemas. That's the FE↔BE graph.
 #
-#   title   — display name (default: titleized id)
-#   icon    — a Tabler outline icon name (https://tabler.io/icons), rendered by canvas.html
-#   order   — render order; lower numbers first (default: alphabetical by title)
-#   summary — one-line description of what lives in the room
+# This file is OPTIONAL. Without it, /feature-tree still builds rooms from the distinct `room`
+# values across features (titleized). This file just adds polish that can't be inferred:
+#   title (display name) · icon (a Tabler outline name, https://tabler.io/icons) · order · summary
 #
-# Leading-underscore filename means /feature-tree's feature walk skips it (it's metadata,
-# not a feature). Features that declare a `room` not listed here still appear — the room is
-# auto-created with default title/icon.
+# The leading-underscore filename keeps /feature-tree's feature walk from treating it as a feature.
 #
-# PROJECT: replace the examples below with your real rooms, or delete this file entirely.
+# PROJECT: this ships with a starter set of rooms common to most web apps. KEEP the ones that fit,
+# delete the rest, and add your app-specific rooms at the bottom. It's scaffolding, not a straitjacket.
 
 rooms:
+  # ── Common to most web apps (prune to taste) ───────────────────────────────
   - id: auth
     title: Auth
     icon: ti-lock
-    order: 1
-    summary: Sign-in, sessions, account recovery.
+    order: 10
+    summary: Sign-in, sessions, accounts, permissions, account recovery.
 
-  - id: checkout
-    title: Checkout
-    icon: ti-shopping-cart
-    order: 2
-    summary: Cart through payment and receipts.
+  - id: data
+    title: Data
+    icon: ti-database
+    order: 20
+    summary: Schemas, migrations, the data model (the `schema`-kind nodes live here).
+
+  - id: billing
+    title: Billing
+    icon: ti-credit-card
+    order: 30
+    summary: Payments, subscriptions, wallet / credits, invoices.
+
+  - id: admin
+    title: Admin
+    icon: ti-shield-cog
+    order: 40
+    summary: Internal / admin tools, moderation, support surfaces.
 
   - id: dashboard
     title: Dashboard
     icon: ti-layout-dashboard
-    order: 3
-    summary: Authenticated account views and analytics.
+    order: 50
+    summary: The authenticated home — overview, analytics, account views.
+
+  - id: notifications
+    title: Notifications
+    icon: ti-bell
+    order: 60
+    summary: Email / push / in-app messaging and preferences.
+
+  - id: files
+    title: Files
+    icon: ti-file
+    order: 70
+    summary: Uploads, storage, media handling.
+
+  - id: search
+    title: Search
+    icon: ti-search
+    order: 80
+    summary: Search, filtering, and discovery.
+
+  - id: settings
+    title: Settings
+    icon: ti-settings
+    order: 90
+    summary: User / account / app configuration.
+
+  - id: onboarding
+    title: Onboarding
+    icon: ti-route
+    order: 100
+    summary: Signup → first-run → activation flow.
+
+  - id: platform
+    title: Platform
+    icon: ti-server-cog
+    order: 110
+    summary: Shared/core infra — typed API client, config, jobs/queues, observability.
+
+  # ── App-specific (replace with yours) ──────────────────────────────────────
+  # - id: trading
+  #   title: Trading
+  #   icon: ti-chart-candle
+  #   order: 200
+  #   summary: The trading engine — orders, positions, risk, the live terminal. (TrillionGame)

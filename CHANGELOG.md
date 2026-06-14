@@ -7,6 +7,15 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14c
+
+- **Layers.** A room is a vertical **domain** (auth, trading, admin) that spans frontend + backend + data; the **layer** is the `kind`. Expanded the kind vocabulary to make layers explicit: `page`/`component` = frontend, `endpoint`/`service` = backend, `schema` = data, `integration` = external, `feature` = a vertical slice. `depends_on` is the cross-layer wiring — a `page` depends_on the endpoints/services it calls, which depend_on schemas. The canvas shows each node's layer in the detail panel; the kind filter toggles layers; the dependency graph + impact-highlight answer "which backend pieces serve which frontend pieces." (schema enum + `feature-tree.prompt` + `canvas.html`).
+
+- **Invariants.** New optional `invariants` array on each node — the load-bearing rules that must not break, gathered by `/feature-tree` from `requirements.md` `## Constraints` (+ hard rules in `design.md`). `canvas.html` renders them in the detail panel.
+
+- **Default rooms template.** `.github/specs/_rooms.yml` now ships a starter set of rooms common to most web apps (auth, data, billing, admin, dashboard, notifications, files, search, settings, onboarding, platform) plus an app-specific section to fill in. Scaffolding, not a straitjacket; the header documents the room = domain / kind = layer / depends_on = wiring model.
+
+
 ## 2026-06-14b
 
 - `canvas.html`: the details panel now has a **draggable divider** — grab the handle between the canvas and the panel to widen it for reading or narrow it to give the graph more room. The graph re-fits live as you drag. Clamped 300–760px, hidden on narrow/stacked layouts. Pairs with the existing collapse toggle.

@@ -81,8 +81,8 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["feature", "endpoint", "component", "schema", "integration"],
-          "description": "What this node represents. Drives layer filtering on the canvas. Default: feature."
+          "enum": ["page", "component", "endpoint", "service", "schema", "integration", "feature"],
+          "description": "What this node represents, which determines its LAYER: page/component = frontend; endpoint/service = backend; schema = data; integration = external; feature = a vertical slice spanning layers (the default). The room is the domain; the kind is the layer. Drives layer coloring + the kind filter on the canvas."
         },
         "room": {
           "type": ["string", "null"],
@@ -123,6 +123,11 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "User/machine entry points, from verification.md ## Surfaces. e.g. '/login — page'."
+        },
+        "invariants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Load-bearing invariants/constraints for this feature — the rules that must not break. From requirements.md ## Constraints (and any hard rules in design.md). Shown in the canvas detail panel."
         },
         "dependsOn": {
           "type": "array",

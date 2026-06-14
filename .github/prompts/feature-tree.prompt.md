@@ -68,11 +68,12 @@ For each directory under `${MAIN_TREE}/.github/specs/` (excluding `_template/`, 
 
 The Markdown index only needs steps 1–5. The JSON graph (Phase 3b) needs a bit more per feature. Gather it in the same pass — it's all cheap frontmatter/section reads:
 
-- **Topology** — read the topology frontmatter from `verification.md` first, then `requirements.md` as a fallback (verification.md wins on conflict; merge missing keys from requirements.md). Keys: `id` (default: dir name), `kind` (default: `feature`), `room` (default: null/ungrouped), `depends_on` (default: `[]`), `title` (default: titleized id), `summary` (default: the step-4 summary).
+- **Topology** — read the topology frontmatter from `verification.md` first, then `requirements.md` as a fallback (verification.md wins on conflict; merge missing keys from requirements.md). Keys: `id` (default: dir name), `kind` (default: `feature`; one of `page`/`component` = frontend · `endpoint`/`service` = backend · `schema` = data · `integration` = external · `feature` = a vertical slice — the **room is the domain, the kind is the layer**), `room` (default: null/ungrouped), `depends_on` (default: `[]`), `title` (default: titleized id), `summary` (default: the step-4 summary).
 - **Detail** (the "full version") — first paragraph of `design.md` `## Approach`. If no `design.md`, fall back to the first paragraph of `verification.md`'s body (after any caveat block), else reuse the summary.
 - **Checkpoints** — from `verification.md` `## Checkpoints`, each `### CP-N: {label}` block. Capture `Type`, `Surface`, and normalize `Last result` to a state: `pass` / `fail` / `skip` / `not-run` (from "not yet run") / `pending` (collapse "pending: needs X", keep the X as `pendingReason`). Count `passing` (state == pass) and `total`.
 - **Todo board** — from `tasks.md`, parse checkbox state per task line: `- [x]` → `done`, `- [~]` → `doing`, `- [ ]` → `next`. Strip the `**[component]**` prefix from the label. Legacy numbered tasks (`1. ...` with no checkbox) all count as `next`. Empty/absent file → empty board.
 - **Surfaces** — the bullet list under `verification.md` `## Surfaces`, verbatim (one string per bullet).
+- **Invariants** — the bullet list under `requirements.md` `## Constraints` (plus any hard rules stated in `design.md`), one short line each. These are the rules that must not break; the canvas shows them in the detail panel.
 - **Node status** (derived, see "Node status" below).
 
 Process in alphabetical order by feature name.
@@ -214,7 +215,7 @@ Top-level keys:
 - `generated`: the same `{YYYY-MM-DD HH:MM}` timestamp as the Markdown.
 - `framework`: `{ "version": {installed_version}, "mode": {mode} }`.
 - `rooms`: one entry per room. Start from `_rooms.yml` (if present) for title/icon/order/summary. Then ensure every distinct `room` value referenced by a feature exists — auto-create missing ones with `title` = titleized id and no icon. Don't emit a room that has no features and isn't in `_rooms.yml`.
-- `nodes`: one entry per feature directory (Phase 2/2a). Map fields straight across: `id`, `kind`, `room` (null if ungrouped), `title`, `summary`, `detail`, `status`, `surfaces`, `dependsOn` (from `depends_on`), `todo`, and `artifacts`.
+- `nodes`: one entry per feature directory (Phase 2/2a). Map fields straight across: `id`, `kind`, `room` (null if ungrouped), `title`, `summary`, `detail`, `status`, `surfaces`, `invariants`, `dependsOn` (from `depends_on`), `todo`, and `artifacts`.
   - `verification`: `null` if no `verification.md`. Otherwise `{ source, statusRaw, lastVerified, passing, total, checkpoints[] }` where each checkpoint is `{ id, label, type, surface, state, pendingReason? }`.
   - `artifacts`: `{ "spec": "{ABS path to .github/specs/{id}/}", "files": { role: "{ABS path}" } }` — include only files that exist, keyed by role (`requirements`, `design`, `tasks`, `verification`, `ui`). Use absolute paths under `${MAIN_TREE}` (same rule as Markdown links — so Claude Code and the canvas can open them).
 - `edges`: flatten every node's `dependsOn` into `{ "from": node.id, "to": dep, "type": "depends-on" }`. Skip edges whose `to` isn't a known node id, but keep the id in the node's `dependsOn` (a dangling dependency is still information).

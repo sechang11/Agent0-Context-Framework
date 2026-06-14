@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14b",
+  "version": "2026-06-14c",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -109,6 +109,14 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14c",
+      "notes": [
+        "LAYERS. A room is a vertical DOMAIN (auth, trading, admin) that spans frontend + backend + data; the LAYER is the `kind`. Expanded the kind vocabulary to make layers explicit: page/component = frontend, endpoint/service = backend, schema = data, integration = external, feature = a vertical slice. depends_on is the cross-layer wiring — a `page` depends_on the endpoints/services it calls, which depend_on schemas. The canvas shows each node's layer in the detail panel; the kind filter toggles layers; the dependency graph + impact-highlight answer 'which backend pieces serve which frontend pieces'. Schema enum + feature-tree.prompt + canvas.html updated.",
+        "INVARIANTS. New optional `invariants` array on each node — the load-bearing rules that must not break, gathered by /feature-tree from requirements.md ## Constraints (+ hard rules in design.md). canvas.html renders them in the detail panel.",
+        "Default rooms template: .github/specs/_rooms.yml now ships a starter set of rooms common to most web apps (auth, data, billing, admin, dashboard, notifications, files, search, settings, onboarding, platform) plus an app-specific section to fill in. Prune to taste; it's scaffolding, not a straitjacket. Header documents the room=domain / kind=layer / depends_on=wiring model."
+      ]
+    },
     {
       "version": "2026-06-14b",
       "notes": [

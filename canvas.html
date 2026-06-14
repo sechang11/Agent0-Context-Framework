@@ -131,6 +131,8 @@
   .bugrow { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
   .bdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
   .bmeta { font-size: 11px; color: var(--text-3); margin-left: auto; }
+  .inv { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-bottom: 7px; padding-left: 16px; position: relative; }
+  .inv::before { content: ''; position: absolute; left: 2px; top: 7px; width: 6px; height: 6px; border-radius: 1px; background: var(--warn); }
   .banner { background: var(--surface-2); border: 1px dashed var(--border-2); border-radius: var(--radius);
     padding: 11px 14px; font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
   .banner b { color: var(--text); font-weight: 500; }
@@ -278,6 +280,9 @@ function roomsSorted() {
 function roomTitle(id) { const r = (data.rooms || []).find(x => x.id === id); return r ? r.title : (id ? titleize(id) : "Ungrouped"); }
 function bugsFor(id) { return (data.bugs || []).filter(b => b.node === id); }
 const BUGCLR = { open: "var(--danger)", "in-progress": "var(--warn)" };
+const LAYER_OF = { page: "frontend", component: "frontend", endpoint: "backend", service: "backend", schema: "data", integration: "external", feature: "feature" };
+const LAYER_LABEL = { frontend: "Frontend", backend: "Backend", data: "Data", external: "External", feature: "Feature" };
+function layerOf(kind) { return LAYER_OF[kind] || "feature"; }
 
 /* ---------- tree view ---------- */
 function renderTree() {
@@ -534,19 +539,23 @@ function renderDetail() {
   const bugs = bugsFor(n.id);
   const bugSec = bugs.length ? `<div class="sec"></div><div class="sec-h">Bugs <span>${bugs.length} open</span></div>` +
     bugs.map(b => `<div class="bugrow"><span class="bdot" style="background:${BUGCLR[b.status] || "var(--text-3)"}"></span><a href=".github/bugs/${esc(b.id)}.md">${esc(b.title)}</a><span class="bmeta">${esc(b.status)}</span></div>`).join("") : "";
+  const inv = n.invariants || [];
+  const invSec = inv.length ? `<div class="sec"></div><div class="sec-h">Invariants <span>must hold</span></div>` +
+    inv.map(i => `<div class="inv">${esc(i)}</div>`).join("") : "";
   const files = (n.artifacts && n.artifacts.files) || {};
   const fileLinks = Object.entries(files).map(([role, path]) => `<a href="${esc(path)}">${esc(role)}</a>`).join("");
   const specLink = n.artifacts && n.artifacts.spec ? `<a href="${esc(n.artifacts.spec)}">${esc(n.artifacts.spec)}</a>` : "";
 
   el.innerHTML = `
     <div class="crumb">
-      <span>${esc(roomTitle(n.room))} ›</span>
+      <span>${esc(roomTitle(n.room))} › ${esc(LAYER_LABEL[layerOf(n.kind)])}${n.kind !== "feature" ? " · " + esc(n.kind) : ""}</span>
       <span class="badge" style="background:${s.bg};color:${s.c}">${s.label}</span>
       ${n.verification ? `<span style="color:var(--text-3)">${esc(n.verification.source)}-derived · last run ${esc(n.verification.lastVerified || "never")}</span>` : ""}
     </div>
     <div class="dtitle">${esc(n.title)}</div>
     <p class="summary" id="sumP">${esc(state.expand && n.detail ? n.detail : n.summary)}</p>
     ${n.detail ? `<button class="more" id="moreBtn">${state.expand ? "Show less" : "Show full"}</button>` : ""}
+    ${invSec}
     <div class="sec"></div>
     <div class="sec-h">Verification checkpoints ${frac(n) ? `<span>${frac(n)} passing</span>` : ""}</div>
     ${cps}
