@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14g",
+  "version": "2026-06-14h",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14h",
+      "notes": [
+        "canvas.html: the impact readout on node select now says 'N nodes depend on it' instead of 'N features' — accurate now that the map holds pages/schemas/services, not only features. (The count is TRANSITIVE dependents: everything that relies on the node directly or through a chain.)"
+      ]
+    },
     {
       "version": "2026-06-14g",
       "notes": [

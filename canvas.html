@@ -637,7 +637,7 @@ function applyHighlight() {
     else { el.classList.add("dim"); el.setAttribute("marker-end", "url(#ar)"); }
   });
   const n = data.nodes.find(x => x.id === sel);
-  info.innerHTML = `<b>${esc(n.title)}</b> — <span class="imp">${anc.size}</span> ${anc.size === 1 ? "feature depends" : "features depend"} on it (affected if changed) · it needs <span class="need">${desc.size}</span>.`;
+  info.innerHTML = `<b>${esc(n.title)}</b> — <span class="imp">${anc.size}</span> ${anc.size === 1 ? "node depends" : "nodes depend"} on it (affected if changed) · it needs <span class="need">${desc.size}</span>.`;
   info.classList.add("show");
 }
 function graphSig(nodes, edges) {
