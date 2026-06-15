@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14g
+
+- **In-canvas glossary.** A **"? Glossary"** button (top-right of `canvas.html`) opens a reference panel defining every term the canvas uses — node, room, feature, layer, depends-on; the kinds (`page`/`component`/`endpoint`/`service`/`schema`/`integration`/`feature`) with their layer colors; the status dots (planned/built/in-progress/verified); the fidelity tiers (stub/cover/spec); the spec files; the detail-panel sections (checkpoints/board/invariants/surfaces); and the interactions (Tree vs Graph, Group Rooms/Layers, filters, click/double-click). Closes on the X, backdrop click, or Esc. Makes the canvas self-explaining.
+
+
 ## 2026-06-14f
 
 - **Focus action for big graphs** in `canvas.html`: **double-click** a node (or click a dependency chip in the detail panel) to zoom/recenter so the node and its **direct links** are framed together — no scrolling across the whole canvas to find a far-away dependency. Single click still just selects + highlights (the view stays put). Helps when room swimlanes spread connected nodes far apart.

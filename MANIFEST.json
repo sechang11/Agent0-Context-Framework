@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14f",
+  "version": "2026-06-14g",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14g",
+      "notes": [
+        "In-canvas GLOSSARY: a '? Glossary' button (top-right of canvas.html) opens a reference panel defining every term the canvas uses — node, room, feature, layer, depends-on; the kinds (page/component/endpoint/service/schema/integration/feature) with their layer colors; the status dots (planned/built/in-progress/verified); the fidelity tiers (stub/cover/spec); the spec files; the detail-panel sections (checkpoints/board/invariants/surfaces); and the interactions (Tree vs Graph, Group Rooms/Layers, filters, click/double-click). Closes on the X, backdrop click, or Esc. Makes the canvas self-explaining."
+      ]
+    },
     {
       "version": "2026-06-14f",
       "notes": [
