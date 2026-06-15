@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14e",
+  "version": "2026-06-14f",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14f",
+      "notes": [
+        "canvas.html focus action for big graphs: DOUBLE-CLICK a node (or click a dependency chip in the detail panel) to zoom/recenter so the node and its DIRECT links are framed together — no scrolling across the whole canvas to find a far-away dependency. Single click still just selects + highlights (view stays put). Helps when room swimlanes spread connected nodes far apart."
+      ]
+    },
     {
       "version": "2026-06-14e",
       "notes": [

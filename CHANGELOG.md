@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14f
+
+- **Focus action for big graphs** in `canvas.html`: **double-click** a node (or click a dependency chip in the detail panel) to zoom/recenter so the node and its **direct links** are framed together — no scrolling across the whole canvas to find a far-away dependency. Single click still just selects + highlights (the view stays put). Helps when room swimlanes spread connected nodes far apart.
+
+
 ## 2026-06-14e
 
 - **Group-by toggle** in `canvas.html`: switch between grouping by **Room** (domain swimlanes — default) and by **Layer** (Frontend / Backend / Data / External lanes, and the same headings in the Tree). Group-by-Layer is the "flat by type" view — the **Data** group is your whole table list, **Frontend** every page. Verified at 169 nodes.

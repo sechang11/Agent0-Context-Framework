@@ -173,7 +173,7 @@
     <span><span class="ldot" style="border-color:var(--l-frontend)"></span>frontend</span>
     <span><span class="ldot" style="border-color:var(--l-backend)"></span>backend</span>
     <span><span class="ldot" style="border-color:var(--l-data)"></span>data</span>
-    <span id="graphhint" style="color:var(--text-3)">· click a node to see what depends on it</span>
+    <span id="graphhint" style="color:var(--text-3)">· click a node to see its dependents · double-click to frame its links</span>
   </div>
   <div class="grid grid-graph" id="grid">
     <div class="leftcell">
@@ -461,12 +461,33 @@ function fit() {
   G.tf = { k, x: (pw - G.contentW * k) / 2, y: (ph - G.contentH * k) / 2 };
   applyTf();
 }
+function fitToNodes(idset) {
+  if (!G) return;
+  const svg = document.getElementById("gsvg"), pw = svg.clientWidth, ph = svg.clientHeight;
+  let aX = Infinity, aY = Infinity, bX = -Infinity, bY = -Infinity;
+  idset.forEach(id => { const p = G.pos.get(id); if (!p) return; aX = Math.min(aX, p.x); aY = Math.min(aY, p.y); bX = Math.max(bX, p.x + NW); bY = Math.max(bY, p.y + NH); });
+  if (aX === Infinity) return;
+  const w = bX - aX, h = bY - aY, M = 70;
+  const k = clamp(Math.min(pw / (w + M * 2), ph / (h + M * 2)), 0.25, 1.6);
+  G.userMoved = true;
+  G.tf = { k, x: pw / 2 - (aX + w / 2) * k, y: ph / 2 - (aY + h / 2) * k };
+  applyTf();
+}
+// frame a node + its DIRECT dependencies and dependents (no scrolling needed to see its links)
+function focusNode(id) {
+  selectNode(id);
+  if (state.view !== "graph" || !G || !G.pos.has(id)) return;
+  fitToNodes(new Set([id, ...(G.fwd.get(id) || []), ...(G.rev.get(id) || [])]));
+}
 function wireSvg(svg) {
   if (svg.__wired) return; svg.__wired = true;
   // node selection via delegation (suppressed if a drag happened)
   svg.addEventListener("click", e => {
     if (svg.__moved) return;
     const g = e.target.closest(".gnode"); if (g) selectNode(g.dataset.id);
+  });
+  svg.addEventListener("dblclick", e => {
+    const g = e.target.closest(".gnode"); if (g) focusNode(g.dataset.id);
   });
   // pan
   let down = false, sx = 0, sy = 0, ox = 0, oy = 0;
@@ -597,7 +618,7 @@ function renderDetail() {
   `;
   const mb = document.getElementById("moreBtn");
   if (mb) mb.onclick = () => { state.expand = !state.expand; renderDetail(); };
-  el.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => selectNode(b.dataset.goto));
+  el.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => focusNode(b.dataset.goto));
 }
 
 /* ---------- chrome ---------- */
