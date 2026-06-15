@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14h",
+  "version": "2026-06-14i",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14i",
+      "notes": [
+        "canvas.html selection UX: (1) click a selected node a SECOND time to DESELECT it — clears the highlight and hides the details panel (single-click toggle, debounced so it doesn't fight double-click-to-focus). (2) When NOTHING is selected (on load, or after deselecting), every node renders in the prominent 'selected-ish' style (bolder border + faint ring) at full opacity — so the resting view is crisp and equal, and selecting a node is what dims the rest. The panel now follows selection: hidden when nothing's picked, opens when you click a node."
+      ]
+    },
     {
       "version": "2026-06-14h",
       "notes": [

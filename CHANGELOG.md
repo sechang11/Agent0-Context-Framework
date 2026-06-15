@@ -7,6 +7,16 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14i
+
+- **Selection UX** in `canvas.html`: (1) click a selected node a **second time to deselect** it — clears the highlight and hides the details panel (single-click toggle, debounced so it doesn't fight double-click-to-focus). (2) When **nothing is selected** (on load, or after deselecting), every node renders in the prominent "selected-ish" style (bolder border + faint ring) at full opacity — so the resting view is crisp and equal, and *selecting* a node is what dims the rest. The panel now follows selection: hidden when nothing's picked, opens when you click a node.
+
+
+## 2026-06-14h
+
+- `canvas.html`: the impact readout on node select now says "N **nodes** depend on it" instead of "N features" — accurate now that the map holds pages/schemas/services, not only features. (The count is **transitive** dependents: everything that relies on the node directly or through a chain.)
+
+
 ## 2026-06-14g
 
 - **In-canvas glossary.** A **"? Glossary"** button (top-right of `canvas.html`) opens a reference panel defining every term the canvas uses — node, room, feature, layer, depends-on; the kinds (`page`/`component`/`endpoint`/`service`/`schema`/`integration`/`feature`) with their layer colors; the status dots (planned/built/in-progress/verified); the fidelity tiers (stub/cover/spec); the spec files; the detail-panel sections (checkpoints/board/invariants/surfaces); and the interactions (Tree vs Graph, Group Rooms/Layers, filters, click/double-click). Closes on the X, backdrop click, or Esc. Makes the canvas self-explaining.

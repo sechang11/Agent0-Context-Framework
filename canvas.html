@@ -85,6 +85,8 @@
   .gnode.sel rect.card { stroke-width: 2.4; }
   .gnode rect.ring { fill: none; stroke: var(--text); stroke-width: 0; }
   .gnode.sel rect.ring { stroke-width: 2.4; stroke: var(--text); opacity: .35; }
+  .gnode.gprom rect.card { stroke-width: 2.4; }
+  .gnode.gprom rect.ring { stroke-width: 2; stroke: var(--text); opacity: .14; }
   path.edge { fill: none; stroke: var(--border-2); stroke-width: 1.3; }
   path.edge.dim { opacity: .08; }
   path.edge.need { stroke: var(--info); stroke-width: 2; }
@@ -358,9 +360,16 @@ const state = { q: "", room: "", kinds: new Set(), expand: false, view: "graph",
 
 /* ---------- shared selection ---------- */
 function selectNode(id) {
+  const reopen = state.panel === "collapsed";
   sel = id; state.userPicked = true; state.expand = false;
+  if (reopen) { state.panel = "open"; render(); return; }   // panel was hidden → full render to open it
   renderDetail();
   if (state.view === "graph") { applyHighlight(); } else { renderTree(); }
+}
+function deselectNode() {
+  state.userPicked = false;
+  state.panel = "collapsed";   // clear selection + hide the panel; nodes go back to the prominent state
+  render();
 }
 
 /* ---------- filtering ---------- */
@@ -578,11 +587,18 @@ function focusNode(id) {
 function wireSvg(svg) {
   if (svg.__wired) return; svg.__wired = true;
   // node selection via delegation (suppressed if a drag happened)
+  let clickT = null;
   svg.addEventListener("click", e => {
     if (svg.__moved) return;
-    const g = e.target.closest(".gnode"); if (g) selectNode(g.dataset.id);
+    const g = e.target.closest(".gnode"); if (!g) return;
+    const id = g.dataset.id;
+    clearTimeout(clickT);
+    clickT = setTimeout(() => {                        // delay so a double-click can cancel this
+      if (sel === id && state.userPicked) deselectNode(); else selectNode(id);
+    }, 200);
   });
   svg.addEventListener("dblclick", e => {
+    clearTimeout(clickT);                              // cancel the pending single-click toggle
     const g = e.target.closest(".gnode"); if (g) focusNode(g.dataset.id);
   });
   // pan
@@ -621,14 +637,14 @@ function applyHighlight() {
   if (!G) return;
   const info = document.getElementById("ginfo");
   if (!state.userPicked || !sel || !G.nodeEls.has(sel)) {
-    G.nodeEls.forEach(el => el.classList.remove("dim", "sel"));
+    G.nodeEls.forEach(el => { el.classList.remove("dim", "sel"); el.classList.add("gprom"); });
     G.edgeEls.forEach(el => { el.classList.remove("dim", "need", "impact"); el.setAttribute("marker-end", "url(#ar)"); });
     info.classList.remove("show"); return;
   }
   const desc = reachable(sel, G.fwd);   // what sel needs (its dependencies)
   const anc = reachable(sel, G.rev);    // what depends on sel (impacted by a change)
   const hi = new Set([sel, ...desc, ...anc]);
-  G.nodeEls.forEach((el, id) => { el.classList.toggle("dim", !hi.has(id)); el.classList.toggle("sel", id === sel); });
+  G.nodeEls.forEach((el, id) => { el.classList.remove("gprom"); el.classList.toggle("dim", !hi.has(id)); el.classList.toggle("sel", id === sel); });
   G.edgeEls.forEach(el => {
     const f = el.dataset.from, t = el.dataset.to;
     el.classList.remove("dim", "need", "impact");
@@ -799,7 +815,7 @@ function render() {
 })();
 
 function load(d, note) {
-  data = d; sel = (d.nodes[0] || {}).id || null; G = null; state.userPicked = false;
+  data = d; sel = (d.nodes[0] || {}).id || null; G = null; state.userPicked = false; state.panel = "collapsed";
   document.getElementById("banner").innerHTML = note ? `<div class="banner">${note}</div>` : "";
   render();
 }
