@@ -177,6 +177,9 @@
     <span class="seg" id="groupseg" title="Group by domain (rooms) or by layer (frontend/backend/data)">
       <button data-g="room">Rooms</button><button data-g="layer">Layers</button>
     </span>
+    <span class="seg" id="arrangeseg" title="Lay rooms in one row, or pack them into a 2D grid with connected rooms clustered together">
+      <button data-a="row">Row</button><button data-a="packed">Packed</button>
+    </span>
     <input type="search" id="search" placeholder="Search features…" />
     <select id="roomf"><option value="">All rooms</option></select>
     <div class="kinds" id="kinds"></div>
@@ -364,7 +367,7 @@ const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 let data = null, sel = null;
-const state = { q: "", room: "", kinds: new Set(), expand: false, view: "graph", userPicked: false, panel: "open", panelW: 400, groupBy: "room" };
+const state = { q: "", room: "", kinds: new Set(), expand: false, view: "graph", userPicked: false, panel: "open", panelW: 400, groupBy: "room", arrange: "packed" };
 
 /* ---------- shared selection ---------- */
 function selectNode(id) {
@@ -476,7 +479,8 @@ function computeDepth(nodes, fwd) {
   nodes.forEach(n => dfs(n.id));
   return depth;
 }
-function layout(nodes, edges) {
+function layout(nodes, edges) { return state.arrange === "packed" ? layoutPacked(nodes, edges) : layoutRow(nodes, edges); }
+function layoutRow(nodes, edges) {
   // Room swimlanes (columns), with dependency depth as the vertical axis shared across lanes:
   // foundations (depth 0) sit at the bottom row, the features built on them rise to the top.
   const { fwd, rev } = adjacency(nodes, edges);
@@ -521,6 +525,57 @@ function layout(nodes, edges) {
 }
 function byId(nodes, id) { return nodes.find(n => n.id === id); }
 
+// order groups so the most cross-connected ones sit next to each other
+function orderGroupsByConnectivity(boxes, nodes, edges) {
+  const roomOf = {}; nodes.forEach(n => roomOf[n.id] = groupKeyOf(n));
+  const W = {};
+  edges.forEach(e => { const a = roomOf[e.from], b = roomOf[e.to]; if (a == null || b == null || a === b) return; (W[a] = W[a] || {})[b] = ((W[a] || {})[b] || 0) + 1; (W[b] = W[b] || {})[a] = ((W[b] || {})[a] || 0) + 1; });
+  const total = id => Object.values(W[id] || {}).reduce((s, v) => s + v, 0);
+  const ids = boxes.map(b => b.g.id).sort((a, b) => total(b) - total(a));
+  const placed = [ids[0]], rem = new Set(ids.slice(1));
+  while (rem.size) {
+    let best = null, bestScore = -1;
+    rem.forEach(id => { const sc = placed.reduce((s, p) => s + ((W[id] && W[id][p]) || 0), 0); if (sc > bestScore || (sc === bestScore && total(id) > (best ? total(best) : -1))) { bestScore = sc; best = id; } });
+    placed.push(best); rem.delete(best);
+  }
+  const byBox = {}; boxes.forEach(b => byBox[b.g.id] = b);
+  return placed.map(id => byBox[id]);
+}
+// each room is a compact box; boxes are connectivity-ordered then packed into a 2D grid
+function layoutPacked(nodes, edges) {
+  const { fwd, rev } = adjacency(nodes, edges);
+  const depth = computeDepth(nodes, fwd);
+  const maxD = Math.max(0, ...nodes.map(n => depth.get(n.id)));
+  const rowOf = id => maxD - depth.get(id);
+  const groups = groupsForView().filter(g => nodes.some(n => groupKeyOf(n) === g.id));
+  const boxes = groups.map(g => {
+    const gn = nodes.filter(n => groupKeyOf(n) === g.id).map(n => n.id);
+    const used = [...new Set(gn.map(rowOf))].sort((a, b) => a - b);
+    const ri = new Map(used.map((r, i) => [r, i]));
+    const rows = used.map(() => []);
+    gn.forEach(id => rows[ri.get(rowOf(id))].push(id));
+    rows.forEach(r => r.sort((a, b) => byId(nodes, a).title > byId(nodes, b).title ? 1 : -1));
+    const cols = Math.max(1, ...rows.map(r => r.length));
+    const local = new Map();
+    rows.forEach((r, k) => { const start = (cols - r.length) / 2; r.forEach((id, c) => local.set(id, { x: LANE_PAD + (start + c) * (NW + COLGAP), y: LANE_LABEL_H + k * (NH + ROWGAP) })); });
+    return { g, local, w: cols * (NW + COLGAP) - COLGAP + LANE_PAD * 2, h: LANE_LABEL_H + rows.length * (NH + ROWGAP) - ROWGAP + LANE_PAD };
+  });
+  const order = boxes.length > 1 ? orderGroupsByConnectivity(boxes, nodes, edges) : boxes;
+  const totalArea = boxes.reduce((s, b) => s + b.w * b.h, 0);
+  const targetW = Math.max(Math.max(...boxes.map(b => b.w)), Math.sqrt(totalArea) * 1.4);
+  const GAP = 32;
+  let x = 0, rowY = 0, rowH = 0, maxX = 0;
+  const placed = new Map();
+  order.forEach(b => {
+    if (x > 0 && x + b.w > targetW) { rowY += rowH + GAP; x = 0; rowH = 0; }
+    placed.set(b.g.id, { x, y: rowY }); x += b.w + GAP; rowH = Math.max(rowH, b.h); maxX = Math.max(maxX, x - GAP);
+  });
+  const pos = new Map();
+  boxes.forEach(b => { const p = placed.get(b.g.id); b.local.forEach((lp, id) => pos.set(id, { x: p.x + lp.x, y: p.y + lp.y })); });
+  const laneRects = order.map(b => { const p = placed.get(b.g.id); return { title: b.g.title, x: p.x, y: p.y, w: b.w, h: b.h }; });
+  return { pos, fwd, rev, contentW: maxX, contentH: rowY + rowH, laneRects, multiRoom: boxes.length > 1 };
+}
+
 function buildGraph(nodes, edges) {
   const svg = document.getElementById("gsvg");
   const { pos, fwd, rev, contentW, contentH, laneRects, multiRoom } = layout(nodes, edges);
@@ -534,7 +589,7 @@ function buildGraph(nodes, edges) {
   // room clusters (under everything)
   if (multiRoom) laneRects.forEach(L => {
     body += `<rect class="lane" x="${L.x}" y="${L.y}" width="${L.w}" height="${L.h}" rx="12"/>`;
-    body += `<text class="lane-label" x="${L.x + LANE_PAD}" y="17">${esc(L.title)}</text>`;
+    body += `<text class="lane-label" x="${L.x + LANE_PAD}" y="${L.y + 17}">${esc(L.title)}</text>`;
   });
   // edges (under nodes)
   edges.forEach((e, i) => {
@@ -665,7 +720,7 @@ function applyHighlight() {
   info.classList.add("show");
 }
 function graphSig(nodes, edges) {
-  return state.q + "|" + state.room + "|" + [...state.kinds].sort().join(",") + "|" + nodes.map(n => n.id + n.status).join(",") + "|" + edges.length + "|b" + (data.bugs || []).length + "|g" + state.groupBy;
+  return state.q + "|" + state.room + "|" + [...state.kinds].sort().join(",") + "|" + nodes.map(n => n.id + n.status).join(",") + "|" + edges.length + "|b" + (data.bugs || []).length + "|g" + state.groupBy + "|a" + state.arrange;
 }
 function renderGraph() {
   const nodes = visibleNodes(), edges = visibleEdges(nodes);
@@ -764,6 +819,10 @@ function renderChrome() {
   document.querySelectorAll("#groupseg button").forEach(b => {
     b.classList.toggle("on", b.dataset.g === state.groupBy);
     b.onclick = () => { if (state.groupBy !== b.dataset.g) { state.groupBy = b.dataset.g; render(); } };
+  });
+  document.querySelectorAll("#arrangeseg button").forEach(b => {
+    b.classList.toggle("on", b.dataset.a === state.arrange);
+    b.onclick = () => { if (state.arrange !== b.dataset.a) { state.arrange = b.dataset.a; render(); } };
   });
 
   const rf = document.getElementById("roomf");

@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14k
+
+- **Packed 2D arrangement** for big graphs — fixes the endless lateral scroll. Instead of all room swimlanes in **one row** (which got absurdly wide on large projects), the graph now (by default) makes each room a **compact box**, orders the boxes so the most cross-connected rooms sit next to each other (dependency-heavy rooms cluster), and packs them into a **2D grid**. On TrillionGame's 169-node map this turned a 16508×788 strip (21:1) into a ~3300×3300 square (1:1) — same nodes, ~5× less width. New **"Row | Packed"** toggle; Row restores the single-row swimlanes (still nice for a handful of rooms, with its global depth alignment). Works with the Rooms/Layers group toggle.
+
+
 ## 2026-06-14j
 
 - **Project pulse** — a project-level companion to per-node next-steps. A **"Project pulse"** button (top-right of `canvas.html`) opens a computed, instant read of the whole project: **In progress** (in-progress nodes + their Doing items), **Ready to pick up** (active features whose dependencies are all built/verified — nothing blocking them — plus queued Next items), **Needs attention** (open bugs + failing/partial checkpoints, each annotated with how many nodes depend on it — its blast radius), and **Coverage** (spec'd/covered vs stub counts). Every item links to its node (clicking frames it). Deterministic/structural — no AI call; for AI-judged priorities, `/nextsteps` still writes `NEXT_STEPS.md`.

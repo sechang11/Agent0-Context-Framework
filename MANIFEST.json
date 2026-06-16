@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14j",
+  "version": "2026-06-14k",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14k",
+      "notes": [
+        "Packed 2D arrangement for big graphs — fixes the endless lateral scroll. Instead of all room swimlanes in ONE row (which got absurdly wide on large projects), the graph now (by default) makes each room a COMPACT BOX, orders the boxes so the most cross-connected rooms sit next to each other (dependency-heavy rooms cluster), and packs them into a 2D grid. On TrillionGame's 169-node map this turned a 16508x788 strip (21:1) into a ~3300x3300 square (1:1) — same nodes, ~5x less width. New 'Row | Packed' toggle in canvas.html; Row restores the single-row swimlanes (still nice for a handful of rooms, with its global depth alignment). Works with the Rooms/Layers group toggle."
+      ]
+    },
     {
       "version": "2026-06-14j",
       "notes": [
