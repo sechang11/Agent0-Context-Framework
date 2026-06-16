@@ -7,6 +7,12 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14m
+
+- **New command `/standup`** — an instant, deterministic project digest printed in the terminal, computed straight from `FEATURE_TREE.json`: **In progress**, **Ready to pick up** (active nodes whose dependencies are all built/verified), **Needs attention** (open bugs + failing/partial checks, each with its blast radius), **Keystones** (most depended-on nodes, unverified ones flagged), **Dependency cycles** (Tarjan SCC), and **Coverage**. It's the in-chat twin of the canvas **Project pulse** button — the command-center as a session-start ritual you run without leaving the terminal. Supports an optional `{room}` scope and `--full` (no truncation). Read-only and offline; for AI-judged priorities with rationale, `/nextsteps` still writes `NEXT_STEPS.md`.
+- **Why:** the canvas pulse lived only in the deployed web viewer, so "where do things stand / what's unblocked / what's on fire" meant leaving your editor to go visit a website. `/standup` brings that structural read to the terminal where you already work, closing the seam between the map and the coding loop.
+
+
 ## 2026-06-14l
 
 - **Calmer-at-rest nodes with a hover pop** — at rest, nodes now sit at a slightly reduced opacity instead of all-bold-by-default; **hovering** a node brings it to full opacity with a bolder border (and reveals it even when dimmed by a selection). Selecting a node still dims the rest. The resting canvas reads quieter; attention follows the cursor.

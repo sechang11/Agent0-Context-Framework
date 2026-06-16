@@ -75,6 +75,7 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | `/ui-review` | Invoke `@ui-ux-engineer` to review a feature's UX — flow, adaptive design per viewport tier, theme consistency. Optional `--engagement` flag adds engagement-hacking analysis in a separate section |
 | `/mode` | Show or set framework mode. `solo` disables worktree isolation (code goes directly to main tree); `review` (default) keeps worktree isolation for code changes. Knowledge artifacts always go to main tree |
 | `/feature-tree` | Regenerate `FEATURE_TREE.md` **and** `FEATURE_TREE.json` at the repo root — a table of contents of every feature (type, summary, status, file links) plus a machine-readable graph the **feature canvas** (`canvas.html`) renders: rooms, nodes, verification checkpoints, the done/doing/next board, and `dependsOn` edges. Auto-invoked by `/spec`, `/cover`, `/verify`; can also be run manually. See `docs/feature-canvas.md` |
+| `/standup` | Instant terminal digest computed from `FEATURE_TREE.json` — In progress, Ready to pick up, Needs attention, Keystones, Dependency cycles, Coverage. The in-chat twin of the canvas **Project pulse**; run it at the start of a session. Optional `{room}` scope and `--full`. Read-only — for AI-judged priorities use `/nextsteps` |
 
 ## Specs
 

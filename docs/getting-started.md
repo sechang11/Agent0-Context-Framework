@@ -152,6 +152,18 @@ Lighter sibling of `/report`. Skips ratings, gaps analysis, and concerns invento
 
 Use `/report` when you want a full health check. Use `/nextsteps` when you already know where the project stands and you just need an actionable list.
 
+### "I want to see where things stand and what to pick up"
+
+```
+/standup                 # full project digest — one screen
+/standup auth            # scope to one room (by id or title)
+/standup --full          # show everything, no truncation
+```
+
+The fastest read in the toolkit — and the one to run **first** each session. It computes a digest straight from `FEATURE_TREE.json` and prints it in chat: **In progress**, **Ready to pick up** (active nodes whose dependencies are all built or verified — nothing's blocking them), **Needs attention** (open bugs and failing checks, each annotated with how many nodes depend on it), **Keystones** (the most depended-on nodes, with unverified ones flagged as single points of failure), **Dependency cycles** (genuine circular dependencies), and **Coverage** (spec'd vs stub counts).
+
+It's the in-chat twin of the canvas **Project pulse** button — the same structural read, but in the terminal where you already work instead of a separate web viewer. Everything is deterministic counting and graph traversal, no AI judgment: same map in, same digest out. When you want AI-judged priorities *with rationale*, reach for `/nextsteps` instead; `/standup` answers "where do things stand right now?", `/nextsteps` answers "what's the smartest next move, and why?". If there's no `FEATURE_TREE.json` yet, run `/feature-tree` first.
+
 ### "I want to pick a visual style"
 
 ```
