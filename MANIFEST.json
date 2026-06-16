@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14i",
+  "version": "2026-06-14j",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,12 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14j",
+      "notes": [
+        "Project pulse — a project-level companion to per-node next-steps. A 'Project pulse' button (top-right of canvas.html) opens a computed, instant read of the whole project: IN PROGRESS (in-progress nodes + their Doing items), READY TO PICK UP (active features whose dependencies are all built/verified — nothing blocking them — plus queued Next items), NEEDS ATTENTION (open bugs + failing/partial checkpoints, each annotated with how many nodes depend on it — its blast radius), and COVERAGE (spec'd/covered vs stub counts). Every item links to its node (clicking frames it on the canvas). It's deterministic/structural (no AI call); for AI-judged priorities, /nextsteps still writes NEXT_STEPS.md."
+      ]
+    },
     {
       "version": "2026-06-14i",
       "notes": [

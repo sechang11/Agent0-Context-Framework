@@ -7,6 +7,11 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14j
+
+- **Project pulse** — a project-level companion to per-node next-steps. A **"Project pulse"** button (top-right of `canvas.html`) opens a computed, instant read of the whole project: **In progress** (in-progress nodes + their Doing items), **Ready to pick up** (active features whose dependencies are all built/verified — nothing blocking them — plus queued Next items), **Needs attention** (open bugs + failing/partial checkpoints, each annotated with how many nodes depend on it — its blast radius), and **Coverage** (spec'd/covered vs stub counts). Every item links to its node (clicking frames it). Deterministic/structural — no AI call; for AI-judged priorities, `/nextsteps` still writes `NEXT_STEPS.md`.
+
+
 ## 2026-06-14i
 
 - **Selection UX** in `canvas.html`: (1) click a selected node a **second time to deselect** it — clears the highlight and hides the details panel (single-click toggle, debounced so it doesn't fight double-click-to-focus). (2) When **nothing is selected** (on load, or after deselecting), every node renders in the prominent "selected-ish" style (bolder border + faint ring) at full opacity — so the resting view is crisp and equal, and *selecting* a node is what dims the rest. The panel now follows selection: hidden when nothing's picked, opens when you click a node.
