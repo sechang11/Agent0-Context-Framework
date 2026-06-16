@@ -47,7 +47,12 @@
     border: none; padding: 7px 13px; }
   .seg button.on { background: var(--text); color: var(--bg); }
   .seg button + button { border-left: 1px solid var(--border); }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); margin-bottom: 14px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); margin-bottom: 10px; }
+  .roomnav { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 2px; }
+  .roomnav::-webkit-scrollbar { height: 6px; }
+  .roomchip { font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); border-radius: 14px; padding: 3px 11px; flex: none; }
+  .roomchip:hover { color: var(--text); border-color: var(--border-2); }
+  .roomchip .rc-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
   .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 5px; }
   .ldot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid; background: transparent; display: inline-block; vertical-align: middle; margin-right: 5px; }
   .grid { display: grid; gap: 14px; align-items: start; position: relative; }
@@ -58,7 +63,7 @@
   .resize-handle { position: absolute; top: 0; height: 100%; width: 12px; right: var(--panel-w, 400px); cursor: col-resize; z-index: 4; display: none; align-items: center; justify-content: center; touch-action: none; }
   .resize-handle::before { content: ''; width: 3px; height: 46px; border-radius: 3px; background: var(--border-2); transition: background .1s, height .1s; }
   .resize-handle:hover::before, .resize-handle.drag::before { background: var(--info); height: 70px; }
-  aside { background: var(--surface-2); border-radius: var(--radius); padding: 10px; height: calc(100vh - 188px); min-height: 440px; overflow-y: auto; }
+  aside { background: var(--surface-2); border-radius: var(--radius); padding: 10px; height: calc(100vh - 224px); min-height: 440px; overflow-y: auto; }
   .room-h { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--text-2);
     text-transform: uppercase; letter-spacing: .04em; margin: 12px 5px 7px; }
   .room-h:first-child { margin-top: 4px; }
@@ -74,19 +79,22 @@
   .kind-tag { font-size: 10px; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
 
   /* graph view */
-  #graphpane { position: relative; background: var(--surface-2); border-radius: var(--radius); height: calc(100vh - 188px); min-height: 440px; overflow: hidden; }
+  #graphpane { position: relative; background: var(--surface-2); border-radius: var(--radius); height: calc(100vh - 224px); min-height: 440px; overflow: hidden; }
   svg.graph { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
   svg.graph.grabbing { cursor: grabbing; }
-  .gnode { cursor: pointer; }
+  .gnode { cursor: pointer; transition: opacity .1s; }
   .gnode rect.card { fill: var(--surface); }
   .gnode text.t { font: 500 12.5px -apple-system, system-ui, sans-serif; fill: var(--text); }
   .gnode text.s { font: 400 10.5px -apple-system, system-ui, sans-serif; fill: var(--text-3); }
   .gnode.dim { opacity: .16; }
+  .gnode.sel { opacity: 1; }
   .gnode.sel rect.card { stroke-width: 2.4; }
   .gnode rect.ring { fill: none; stroke: var(--text); stroke-width: 0; }
   .gnode.sel rect.ring { stroke-width: 2.4; stroke: var(--text); opacity: .35; }
-  .gnode.gprom rect.card { stroke-width: 2.4; }
-  .gnode.gprom rect.ring { stroke-width: 2; stroke: var(--text); opacity: .14; }
+  .gnode.rest { opacity: .82; }
+  .gnode:hover { opacity: 1 !important; }
+  .gnode:hover rect.card { stroke-width: 2.4; }
+  .gnode:hover rect.ring { stroke-width: 2; stroke: var(--text); opacity: .2; }
   path.edge { fill: none; stroke: var(--border-2); stroke-width: 1.3; }
   path.edge.dim { opacity: .08; }
   path.edge.need { stroke: var(--info); stroke-width: 2; }
@@ -107,7 +115,7 @@
   .ginfo .imp { color: var(--warn); }
   .ginfo .need { color: var(--info); }
 
-  section.detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; height: calc(100vh - 188px); min-height: 440px; overflow-y: auto; }
+  section.detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; height: calc(100vh - 224px); min-height: 440px; overflow-y: auto; }
   .crumb { font-size: 12px; color: var(--text-3); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .badge { font-size: 11px; border-radius: var(--radius-sm); padding: 2px 9px; }
   .dtitle { font-size: 19px; font-weight: 500; margin: 2px 0 8px; }
@@ -197,6 +205,7 @@
     <span><span class="ldot" style="border-color:var(--l-data)"></span>data</span>
     <span id="graphhint" style="color:var(--text-3)">· click a node to see its dependents · double-click to frame its links</span>
   </div>
+  <div class="roomnav" id="roomnav" title="Jump to a room"></div>
   <div class="grid grid-graph" id="grid">
     <div class="leftcell">
       <aside id="tree" style="display:none"></aside>
@@ -421,6 +430,8 @@ const LAYER_LABEL = { frontend: "Frontend", backend: "Backend", data: "Data", ex
 const LAYER_COLOR = { frontend: "var(--l-frontend)", backend: "var(--l-backend)", data: "var(--l-data)", external: "var(--l-external)", feature: "var(--l-feature)" };
 function layerOf(kind) { return LAYER_OF[kind] || "feature"; }
 function layerColor(kind) { return LAYER_COLOR[layerOf(kind)]; }
+// within a layer, distinguish kinds by border style: page/service/schema/feature solid; component/endpoint dashed; integration dotted
+const KIND_DASH = { component: "6 3", endpoint: "6 3", integration: "2 2.5" };
 
 /* ---------- tree view ---------- */
 function renderTree() {
@@ -603,7 +614,7 @@ function buildGraph(nodes, edges) {
     const subParts = [roomTitle(n.room)]; if (n.kind !== "feature") subParts.push(n.kind);
     body += `<g class="gnode" data-id="${esc(n.id)}" transform="translate(${p.x},${p.y})">
       <rect class="ring" x="-3" y="-3" width="${NW + 6}" height="${NH + 6}" rx="9"/>
-      <rect class="card" x="0" y="0" width="${NW}" height="${NH}" rx="8" stroke="${layerColor(n.kind)}" stroke-width="1.7"/>
+      <rect class="card" x="0" y="0" width="${NW}" height="${NH}" rx="8" stroke="${layerColor(n.kind)}" stroke-width="1.7"${KIND_DASH[n.kind] ? ` stroke-dasharray="${KIND_DASH[n.kind]}"` : ""}/>
       <circle cx="14" cy="${NH / 2}" r="5" fill="${s.c}"/>
       <text class="t" x="26" y="${NH / 2 - 2}">${esc(trunc(n.title, 19))}</text>
       <text class="s" x="26" y="${NH / 2 + 13}">${esc(trunc(subParts.join(" · "), 24))}${f ? "  " + f : ""}</text>
@@ -646,6 +657,16 @@ function focusNode(id) {
   selectNode(id);
   if (state.view !== "graph" || !G || !G.pos.has(id)) return;
   fitToNodes(new Set([id, ...(G.fwd.get(id) || []), ...(G.rev.get(id) || [])]));
+}
+// jump the canvas to a room: pan/zoom to its nodes (graph), or scroll to its header (tree)
+function focusRoom(id) {
+  if (state.view === "graph" && G) {
+    const ids = data.nodes.filter(n => n.room === id && passFilter(n)).map(n => n.id);
+    if (ids.length) fitToNodes(new Set(ids));
+  } else {
+    const t = roomTitle(id);
+    document.querySelectorAll("#tree .room-h").forEach(h => { if (h.textContent.trim().startsWith(t)) h.scrollIntoView({ block: "nearest" }); });
+  }
 }
 function wireSvg(svg) {
   if (svg.__wired) return; svg.__wired = true;
@@ -700,14 +721,14 @@ function applyHighlight() {
   if (!G) return;
   const info = document.getElementById("ginfo");
   if (!state.userPicked || !sel || !G.nodeEls.has(sel)) {
-    G.nodeEls.forEach(el => { el.classList.remove("dim", "sel"); el.classList.add("gprom"); });
+    G.nodeEls.forEach(el => { el.classList.remove("dim", "sel"); el.classList.add("rest"); });
     G.edgeEls.forEach(el => { el.classList.remove("dim", "need", "impact"); el.setAttribute("marker-end", "url(#ar)"); });
     info.classList.remove("show"); return;
   }
   const desc = reachable(sel, G.fwd);   // what sel needs (its dependencies)
   const anc = reachable(sel, G.rev);    // what depends on sel (impacted by a change)
   const hi = new Set([sel, ...desc, ...anc]);
-  G.nodeEls.forEach((el, id) => { el.classList.remove("gprom"); el.classList.toggle("dim", !hi.has(id)); el.classList.toggle("sel", id === sel); });
+  G.nodeEls.forEach((el, id) => { el.classList.remove("rest"); el.classList.toggle("dim", !hi.has(id)); el.classList.toggle("sel", id === sel); });
   G.edgeEls.forEach(el => {
     const f = el.dataset.from, t = el.dataset.to;
     el.classList.remove("dim", "need", "impact");
@@ -841,6 +862,15 @@ function renderChrome() {
 
   document.querySelectorAll(".zoom button").forEach(b => b.onclick = () => zoomBtn(b.dataset.z));
 
+  const rn = document.getElementById("roomnav");
+  const rlist = roomsSorted().filter(r => r.id && data.nodes.some(n => n.room === r.id && passFilter(n)));
+  rn.innerHTML = rlist.map(r => {
+    const c = data.nodes.filter(n => n.room === r.id && passFilter(n)).length;
+    return `<button class="roomchip" data-room="${esc(r.id)}">${esc(r.title)} <span style="color:var(--text-3)">${c}</span></button>`;
+  }).join("");
+  rn.querySelectorAll(".roomchip").forEach(b => b.onclick = () => focusRoom(b.dataset.room));
+  rn.style.display = rlist.length > 1 ? "flex" : "none";
+
   const pt = document.getElementById("paneltoggle");
   pt.textContent = state.panel === "collapsed" ? "‹ Show details" : "Hide details ›";
   pt.classList.toggle("on", state.panel === "collapsed");
@@ -909,6 +939,21 @@ root.addEventListener("drop", ev => {
 });
 window.addEventListener("resize", () => { if (state.view === "graph" && G && !G.userMoved) fit(); });
 
+function tarjanCycles(nodes) {
+  const ids = new Set(nodes.map(n => n.id));
+  const adj = {}; nodes.forEach(n => adj[n.id] = (n.dependsOn || []).filter(d => ids.has(d)));
+  let idx = 0; const stack = [], onStack = {}, index = {}, low = {}, sccs = [];
+  function strong(v) {
+    index[v] = idx; low[v] = idx; idx++; stack.push(v); onStack[v] = true;
+    (adj[v] || []).forEach(w => {
+      if (index[w] === undefined) { strong(w); low[v] = Math.min(low[v], low[w]); }
+      else if (onStack[w]) { low[v] = Math.min(low[v], index[w]); }
+    });
+    if (low[v] === index[v]) { const comp = []; let w; do { w = stack.pop(); onStack[w] = false; comp.push(w); } while (w !== v); if (comp.length > 1) sccs.push(comp); }
+  }
+  nodes.forEach(n => { if (index[n.id] === undefined) strong(n.id); });
+  return sccs;
+}
 function suggestData() {
   const N = data.nodes, by = {}; N.forEach(n => by[n.id] = n);
   const verOrBuilt = id => by[id] && (by[id].status === "verified" || by[id].status === "built");
@@ -923,6 +968,8 @@ function suggestData() {
     nexts: active.flatMap(n => (n.todo && n.todo.next || []).map(t => ({ id: n.id, title: n.title, t }))),
     openBugs: (data.bugs || []).filter(b => b.status === "open"),
     failing: N.filter(n => n.verification && ((n.verification.checkpoints || []).some(c => c.state === "fail") || ["failing", "partial"].includes(n.verification.statusRaw))),
+    keystones: N.map(n => ({ n, b: blast(n.id) })).filter(x => x.b > 0).sort((a, b) => b.b - a.b).slice(0, 6),
+    cycles: tarjanCycles(N),
     specd: N.filter(n => n.verification).length,
     stubs: N.filter(n => !n.verification).length,
     total: N.length
@@ -947,6 +994,8 @@ function renderSuggest() {
     ...s.failing.map(n => `<span style="color:var(--warn);font-weight:500">Failing checks</span> · ${go(n.id, n.title)} ${dim("(" + s.blast(n.id) + " depend on it)")}`)
   ];
   h += `<div class="help-sec"><h3>Needs attention (${att.length})</h3>${ul(att.slice(0, 8))}</div>`;
+  h += `<div class="help-sec"><h3>Keystones (most depended-on)</h3><p style="color:var(--text-3);font-size:12.5px;margin:0 0 8px">The load-bearing nodes — a break here radiates widest. Unverified ones are the riskiest.</p>${ul(s.keystones.map(k => `${go(k.n.id, k.n.title)} ${dim("— " + k.b + " depend on it · " + (k.n.verification ? k.n.verification.passing + "/" + k.n.verification.total + " checks" : "<span style='color:var(--warn)'>no verification</span>"))}`))}</div>`;
+  if (s.cycles.length) h += `<div class="help-sec"><h3>Dependency cycles (${s.cycles.length})</h3><p style="color:var(--text-3);font-size:12.5px;margin:0 0 8px">Mutually-entangled nodes — no clean build/verify order; a change to one can ripple to all. Worth breaking.</p>${ul(s.cycles.map(c => c.map(id => go(id, (s.by[id] || {}).title || id)).join(" ↔ ")))}</div>`;
   h += `<div class="help-sec"><h3>Coverage</h3><p style="font-size:13.5px;color:var(--text-2);margin:0"><b>${s.specd}</b> of ${s.total} nodes are spec'd or covered (have verification); <b>${s.stubs}</b> are stubs / unspec'd. The spec'd ones are your real, pinned work; the stubs are charted-but-uncontracted.</p></div>`;
   document.getElementById("suggestBody").innerHTML = h;
   document.querySelectorAll("#suggestBody [data-go]").forEach(a => a.onclick = () => { document.getElementById("suggestOverlay").classList.remove("show"); focusNode(a.dataset.go); });

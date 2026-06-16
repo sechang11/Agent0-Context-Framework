@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14k",
+  "version": "2026-06-14l",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -110,6 +110,15 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-06-14l",
+      "notes": [
+        "Node styling: nodes are now CALMER at rest (slightly reduced opacity) and pop on HOVER (full opacity + bold border) — replacing the previous 'everything bold by default'. Selecting still dims the rest; hovering a dimmed node reveals it.",
+        "Per-kind border style — distinguishes kinds WITHIN a layer (same layer color): page/service/schema/feature are solid-bordered; component and endpoint are dashed; integration is dotted. So page vs component and service vs endpoint are now visually different, not just color-identical.",
+        "Room navbar — a scrollable strip of room chips above the graph. Click a room to jump the canvas to it (pan/zoom to that room's nodes in the graph; scroll to its header in the tree). Fast navigation for large maps.",
+        "Project pulse gained two high-signal sections (from a multi-lens ideation pass): KEYSTONES — the top nodes by transitive dependents (blast radius), with unverified ones flagged in warning color (a high-blast unverified node is a single point of failure); and DEPENDENCY CYCLES — real circular dependencies found via a Tarjan strongly-connected-components pass (surfaces mutual entanglements the topological layout silently swallows). On TrillionGame this flagged a high-blast unverified Discord integration and a previously-unknown 4-node leaderboard cycle."
+      ]
+    },
     {
       "version": "2026-06-14k",
       "notes": [

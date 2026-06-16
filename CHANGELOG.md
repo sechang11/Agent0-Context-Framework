@@ -7,6 +7,14 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-06-14l
+
+- **Calmer-at-rest nodes with a hover pop** — at rest, nodes now sit at a slightly reduced opacity instead of all-bold-by-default; **hovering** a node brings it to full opacity with a bolder border (and reveals it even when dimmed by a selection). Selecting a node still dims the rest. The resting canvas reads quieter; attention follows the cursor.
+- **Per-kind border style** — within a layer (same layer color) the **kind** is now visually distinct: page/service/schema/feature are solid-bordered, **component** and **endpoint** are dashed, **integration** is dotted. So page-vs-component and service-vs-endpoint are no longer color-identical at a glance.
+- **Room navbar** — a scrollable strip of room chips above the graph; click a room to **jump the canvas to it** (pan/zoom to that room's nodes in Graph view, scroll to its header in Tree view). Fast navigation on large maps. Hidden when there's only one room.
+- **Project pulse — two new sections.** **Keystones (most depended-on):** the top nodes by transitive dependents (blast radius), with **unverified** keystones flagged in warning color — a high-blast node with no verification is a single point of failure. **Dependency cycles:** real circular dependencies detected via a Tarjan strongly-connected-components pass — surfaces mutual entanglements that the layered layout silently flattens (no clean build/verify order). On TrillionGame this flagged an unverified Discord integration with 17 dependents and a previously-unknown 4-node leaderboard cycle.
+
+
 ## 2026-06-14k
 
 - **Packed 2D arrangement** for big graphs — fixes the endless lateral scroll. Instead of all room swimlanes in **one row** (which got absurdly wide on large projects), the graph now (by default) makes each room a **compact box**, orders the boxes so the most cross-connected rooms sit next to each other (dependency-heavy rooms cluster), and packs them into a **2D grid**. On TrillionGame's 169-node map this turned a 16508×788 strip (21:1) into a ~3300×3300 square (1:1) — same nodes, ~5× less width. New **"Row | Packed"** toggle; Row restores the single-row swimlanes (still nice for a handful of rooms, with its global depth alignment). Works with the Rooms/Layers group toggle.
