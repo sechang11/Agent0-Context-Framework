@@ -129,6 +129,11 @@
           "items": { "type": "string" },
           "description": "Load-bearing invariants/constraints for this feature — the rules that must not break. From requirements.md ## Constraints (and any hard rules in design.md). Shown in the canvas detail panel."
         },
+        "flair": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Flair — choices Claude made that were never specified (styling calls, defaults, copy, structure), plus any other spec detail that isn't a hard rule. Freely changeable, in contrast to invariants. From design.md ## Flair. Edited in-app via the Scaffold overlay (scaffold.js)."
+        },
         "dependsOn": {
           "type": "array",
           "items": { "type": "string" },

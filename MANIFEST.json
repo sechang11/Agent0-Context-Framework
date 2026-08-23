@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-06-14m",
+  "version": "2026-08-23",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -29,6 +29,8 @@
     { "path": ".claude/commands/nextsteps.md",          "class": "additive" },
     { "path": ".claude/commands/feature-tree.md",       "class": "additive" },
     { "path": ".claude/commands/standup.md",            "class": "additive" },
+    { "path": ".claude/commands/install-scaffold.md",   "class": "additive" },
+    { "path": ".claude/commands/demolish-scaffold.md",  "class": "additive" },
 
     { "path": ".github/prompts/adopt-framework.prompt.md",     "class": "additive" },
     { "path": ".github/prompts/spec.prompt.md",                "class": "additive" },
@@ -48,6 +50,8 @@
     { "path": ".github/prompts/nextsteps.prompt.md",           "class": "additive" },
     { "path": ".github/prompts/feature-tree.prompt.md",        "class": "additive" },
     { "path": ".github/prompts/standup.prompt.md",             "class": "additive" },
+    { "path": ".github/prompts/install-scaffold.prompt.md",    "class": "additive" },
+    { "path": ".github/prompts/demolish-scaffold.prompt.md",   "class": "additive" },
 
     { "path": ".github/bugs/README.md",                     "class": "additive" },
     { "path": ".github/schemas/feature-tree.schema.json",   "class": "additive" },
@@ -56,6 +60,7 @@
     { "path": ".github/instructions/style.instructions.md", "class": "template" },
     { "path": ".github/skills/web-debug/SKILL.md",          "class": "additive" },
     { "path": ".github/skills/responsive-design/SKILL.md",  "class": "additive" },
+    { "path": ".github/skills/scaffolding/SKILL.md",        "class": "additive" },
     { "path": ".github/themes/README.md",                   "class": "additive" },
     { "path": ".github/themes/_template/THEME.md",          "class": "template" },
     { "path": ".github/themes/clean-modern/THEME.md",       "class": "additive" },
@@ -64,6 +69,7 @@
     { "path": "CHANGELOG.md",                               "class": "additive" },
     { "path": "canvas.html",                                "class": "additive" },
     { "path": "canvas-server.cjs",                          "class": "additive" },
+    { "path": "scaffold.js",                                "class": "additive" },
     { "path": "FEATURE_TREE.example.json",                  "class": "additive" },
     { "path": "docs/getting-started.md",                    "class": "additive" },
     { "path": "docs/workflow-guide.md",                     "class": "additive" },
@@ -109,10 +115,21 @@
     { "command": "/mode",              "purpose": "Show or set framework mode. `solo` disables worktree isolation (code goes directly to main tree, trust git/GitHub for rollback); `review` (default) keeps worktree isolation for code changes. Knowledge artifacts always go to main tree regardless." },
     { "command": "/nextsteps",         "purpose": "Focused next-step recommendations from each agent — no ratings, no gaps. Writes NEXT_STEPS.md at the repo root with a prioritized cross-agent table (priority/action/why/raised-by/effort/tied-to). Supports --only/--exclude filters and --horizon short|medium|long. Lighter sibling of /report." },
     { "command": "/feature-tree",      "purpose": "Regenerate FEATURE_TREE.md AND FEATURE_TREE.json at the repo root — a glanceable table of contents of every feature (type, summary, verification status, file links) plus a machine-readable graph projection (rooms, nodes, checkpoints, done/doing/next board, dependsOn edges) that the feature canvas (canvas.html) renders. One walk, two projections. Agent-driven (no Python script). Auto-invoked by /spec, /cover, /verify; can also be run manually." },
-    { "command": "/standup",           "purpose": "Print an instant, deterministic project digest in the terminal — In progress, Ready to pick up, Needs attention, Keystones, Dependency cycles, Coverage — computed straight from FEATURE_TREE.json. The in-chat twin of the canvas Project pulse. Optional {room} scope and --full. Read-only; for AI-judged priorities use /nextsteps." }
+    { "command": "/standup",           "purpose": "Print an instant, deterministic project digest in the terminal — In progress, Ready to pick up, Needs attention, Scaffold requests, Keystones, Dependency cycles, Coverage — computed straight from FEATURE_TREE.json. The in-chat twin of the canvas Project pulse. Optional {room} scope and --full. Read-only; for AI-judged priorities use /nextsteps." },
+    { "command": "/install-scaffold",  "purpose": "Erect the Scaffold — an in-app, dev-only spec overlay (devtools for your specs): a pill → drawer on every page showing that page's node, its Invariants (non-negotiables) and Flair (Claude's changeable choices) in an IDE-colored, plain-language editor, an all-specs browser, and a request queue (cover/verify/spec/notes) Claude reads at the next /standup — no AI is called from the panel. UI ships prebuilt as scaffold.js; this wires the host dev server per .github/skills/scaffolding/SKILL.md, gated on SCAFFOLD_PANEL=1." },
+    { "command": "/demolish-scaffold", "purpose": "Tear the Scaffold back out of the host app — inventory, preview-and-confirm gate, remove wiring/routes/script injection, verify clean. Queued requests and spec edits are kept by default; scaffold.js stays (framework-managed)." }
   ],
 
   "changelog": [
+    {
+      "version": "2026-08-23",
+      "notes": [
+        "The SCAFFOLD — a fourth surface: in-app, dev-only spec devtools. New prebuilt overlay `scaffold.js` (self-contained, Shadow-DOM isolated, zero-dependency, ships at the repo root like canvas.html): a '⌂ Scaffold' pill on every page opens a drawer showing the CURRENT page's node from FEATURE_TREE.json — spec at a glance, plus two editable sections in ELI5 language with IDE-style syntax coloring: INVARIANTS (the non-negotiables, from requirements.md ## Constraints — 'rules this page must never break; Claude treats these as law') and FLAIR (choices Claude made that were never specified, plus everything else non-invariant, saved to design.md ## Flair — 'edit freely; nothing sacred here'). Also an all-specs browser (search, grouped by room) and a Requests tab.",
+        "No AI calls, ever: panel buttons (Cover this page / Verify / Spec it / notes) append to .github/scaffolding/requests.json — a flag queue Claude reads at the next session. /standup gained a 'Scaffold requests' section that surfaces the queue. Saves from the editor write ONLY to the two owned spec sections (bounded, per the skill contract) and flag the change for review.",
+        "New skill .github/skills/scaffolding/SKILL.md — the stack-agnostic contract (env gate SCAFFOLD_PANEL=1, 404 in production, three JSON routes, bounded writes, reversibility). New commands /install-scaffold (preflight → stack plan → confirm → wire → verify; the UI ships prebuilt so host wiring is ~60 lines) and /demolish-scaffold (inventory → preview-and-confirm → strike; data kept by default — the specs are the building, the scaffold comes down).",
+        "Schema: nodes gained optional `flair` (array of strings, mirror of invariants); /feature-tree now emits it from design.md ## Flair."
+      ]
+    },
     {
       "version": "2026-06-14m",
       "notes": [

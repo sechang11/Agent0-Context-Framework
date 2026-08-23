@@ -164,6 +164,17 @@ The fastest read in the toolkit — and the one to run **first** each session. I
 
 It's the in-chat twin of the canvas **Project pulse** button — the same structural read, but in the terminal where you already work instead of a separate web viewer. Everything is deterministic counting and graph traversal, no AI judgment: same map in, same digest out. When you want AI-judged priorities *with rationale*, reach for `/nextsteps` instead; `/standup` answers "where do things stand right now?", `/nextsteps` answers "what's the smartest next move, and why?". If there's no `FEATURE_TREE.json` yet, run `/feature-tree` first.
 
+### "I want spec devtools inside my running app"
+
+```
+/install-scaffold           # erect it (plan → confirm → wire, dev-only)
+/demolish-scaffold          # strike it later — the specs stay
+```
+
+The **Scaffold** puts a "⌂ Scaffold" pill on every page of your running app (dev only, gated by `SCAFFOLD_PANEL=1`). Click it and a drawer shows **the page you're on** as the framework sees it: its node from the map, status, checks, and its spec split into two plain-language, IDE-colored sections — **Invariants**, the rules this page must never break (Claude treats these as law), and **Flair**, the choices Claude made that you never asked for (edit freely; nothing sacred there). If you build by describing what you want, this is your source code — readable and editable where you can see the page it governs.
+
+Buttons like **Cover this page** never call an AI. They queue a request in `.github/scaffolding/requests.json`, and the next `/standup` puts it in front of Claude. Browse everything at once in the **All specs** tab. When you're done building, tear it down — scaffolding is temporary by design; the building (your specs) remains.
+
 ### "I want to pick a visual style"
 
 ```

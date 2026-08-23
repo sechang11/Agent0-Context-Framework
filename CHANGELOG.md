@@ -7,6 +7,14 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-08-23
+
+- **The Scaffold** — a fourth surface: in-app, dev-only **spec devtools**. New prebuilt overlay **`scaffold.js`** (self-contained, Shadow-DOM isolated, zero-dependency, ships at the repo root like `canvas.html`): a "⌂ Scaffold" pill on every page opens a drawer showing the **current page's node** from `FEATURE_TREE.json` — spec at a glance, plus two editable sections in ELI5 language with IDE-style syntax coloring: **Invariants** (the non-negotiables, from `requirements.md ## Constraints` — *rules this page must never break; Claude treats these as law*) and **Flair** (choices Claude made that were never specified, plus everything else non-invariant, saved to `design.md ## Flair` — *edit freely; nothing sacred here*). Also an all-specs browser (search, grouped by room) and a Requests tab.
+- **No AI calls, ever:** panel buttons (Cover this page / Verify / Spec it / notes) append to `.github/scaffolding/requests.json` — a flag queue Claude reads at the next session. `/standup` gained a **Scaffold requests** section that surfaces the queue. Editor saves write only to the two owned spec sections (bounded, per the skill contract) and flag the change for review.
+- New skill **`.github/skills/scaffolding/SKILL.md`** — the stack-agnostic contract (env gate `SCAFFOLD_PANEL=1`, 404 in production, three JSON routes, bounded writes, reversibility). New commands **`/install-scaffold`** (preflight → stack plan → confirm → wire → verify; the UI ships prebuilt so host wiring is ~60 lines) and **`/demolish-scaffold`** (inventory → preview-and-confirm → strike; data kept by default — the specs are the building, the scaffold comes down).
+- Schema: nodes gained optional **`flair`** (array of strings, mirror of `invariants`); `/feature-tree` now emits it from `design.md ## Flair`.
+
+
 ## 2026-06-14m
 
 - **New command `/standup`** — an instant, deterministic project digest printed in the terminal, computed straight from `FEATURE_TREE.json`: **In progress**, **Ready to pick up** (active nodes whose dependencies are all built/verified), **Needs attention** (open bugs + failing/partial checks, each with its blast radius), **Keystones** (most depended-on nodes, unverified ones flagged), **Dependency cycles** (Tarjan SCC), and **Coverage**. It's the in-chat twin of the canvas **Project pulse** button — the command-center as a session-start ritual you run without leaving the terminal. Supports an optional `{room}` scope and `--full` (no truncation). Read-only and offline; for AI-judged priorities with rationale, `/nextsteps` still writes `NEXT_STEPS.md`.

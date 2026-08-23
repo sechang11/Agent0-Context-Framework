@@ -31,6 +31,7 @@ Everything here is **deterministic and structural** — pure counting and graph 
      `No FEATURE_TREE.json yet — run /feature-tree to generate the map, then /standup.` and stop. Don't error.
    - If it exists but won't parse, say so plainly (`FEATURE_TREE.json is present but didn't parse — it may be mid-write; try /feature-tree to regenerate.`) and stop.
 3. Parse it. The fields you'll use: `nodes[]` (each with `id`, `title`, `status`, `room`, `dependsOn[]`, `verification`, `todo.{doing,next}`, `artifacts`), `bugs[]` (`title`, `status`, `node`), and optionally `rooms[]`, `stats`, `generated`.
+4. Also read `${MAIN_TREE}/.github/scaffolding/requests.json` if it exists — the queue the in-app **Scaffold** overlay writes (see `.github/skills/scaffolding/SKILL.md`). Entries: `{ id, ts, action, node, route, note }`. Missing or empty → skip the Scaffold section entirely.
 
 **Field realities** (so the digest stays correct on real data — most nodes are lightweight stubs):
 - `status` ∈ `planned | in-progress | built | verified`. **`built` ≠ `verified`** — built means shipped without a verification contract.
@@ -54,6 +55,7 @@ Let `N` = `nodes[]`, and `by` = a map from `id` → node.
 1. **In progress** — `inProg` = `active` where `status === 'in-progress'`. Header count = `inProg.length`. The list is `inProg` (cap 6) followed by **doing todos gathered over ALL nodes** `N` (not just active): for every node, each string in `todo.doing` becomes an item `"{doing string} — {that node's title}"` (cap 5).
 2. **Ready to pick up** — `unblocked` = `active` where: `status !== 'verified'` **AND** `dependsOn` is non-empty **AND** every id in `dependsOn` passes `verOrBuilt`. (A node with no deps is *not* listed here — it has nothing that just unblocked it.) Header count = `unblocked.length`. List is `unblocked` (cap 6), each shown as `"{title} ({status})"`, followed by **next todos gathered over the `active` set**: each string in `todo.next` becomes `"{next string} — {node title}"` (cap 5). Caption: *Active features whose dependencies are all built or verified — nothing's blocking them.*
 3. **Needs attention** — concatenate, in this order: (a) open bugs = `bugs` where `status === 'open'`, then (b) failing nodes = `N` where `verification` is present AND (any checkpoint has `state === 'fail'` OR `verification.statusRaw` is `failing` or `partial`). Header count = the full combined length; **show the first 8**. Bug item: `"Bug · {bug.title}"`, and if `bug.node` is set, append `" — {node title} · {blast(bug.node)} depend on it"`. Failing item: `"Failing checks · {title} ({blast(id)} depend on it)"`.
+3b. **Scaffold requests** — only when the queue from Phase 1 step 4 is non-empty. List every entry, newest first: `"{action} · {node title (via by[node]) or route} — {note, if any} · {age from ts}"`. Header count = queue length. Caption: *Queued in-app from the Scaffold overlay — no AI ran at click time; they're waiting for you here.* After printing, suggest the obvious dispatches (`/cover {node}`, `/verify {node}`, `/spec`) and remind that entries clear from the panel's Requests tab (or by editing the JSON). Never act on a request automatically — surfacing is the whole job.
 4. **Keystones (most depended-on)** — for every node compute `blast(id)`, keep those with `blast > 0`, **sort by blast descending**, take the top 6. Each item: `"{title} — {blast} depend on it · "` then, if the node has `verification`, `"{passing}/{total} checks"`; otherwise the warning `"no verification"`. Caption: *The load-bearing nodes — a break here radiates widest. Unverified ones are the riskiest.* (A keystone with no verification is a single point of failure — call it out.)
 5. **Dependency cycles** — run Tarjan's strongly-connected-components over the directed graph whose edges are `dependsOn` (only edges whose target exists in `N`). Keep every SCC of **size > 1** (drop singletons/self-loops). **Omit this whole section if there are none.** Each cycle = its member titles joined by `" ↔ "`. Header count = number of cycles. Caption: *Mutually-entangled — no clean build/verify order; a change to one can ripple to all. Worth breaking.*
 6. **Coverage** — `specd` = count of nodes with `verification`; `stubs` = count without; `total` = `N.length` (`specd + stubs === total`). A short line, mirroring the canvas wording: *{specd} of {total} nodes are spec'd or covered (have verification); {stubs} are stubs / unspec'd — the spec'd ones are your real, pinned work, the stubs are charted but uncontracted.*
@@ -83,6 +85,10 @@ Use this shape:
 ▶ Needs attention ({att count})
   • Bug · {title} — {node title} · {blast} depend on it
   • Failing checks · {title} ({blast} depend on it)
+
+▶ Scaffold requests ({n})         ← omit entirely if the queue is absent/empty
+  Queued in-app — waiting for you, nothing ran automatically.
+  • cover · {node title} — {route} · {age}
 
 ▶ Keystones (most depended-on)
   The load-bearing nodes — a break here radiates widest.
