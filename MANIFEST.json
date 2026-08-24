@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-08-23",
+  "version": "2026-08-24",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -121,6 +121,14 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-08-24",
+      "notes": [
+        "Scaffold editor rebuilt around a real syntax-highlighted Markdown editor: the whole spec is now ONE document (`## MUST NEVER CHANGE` → invariants, `## CAN CHANGE` → flair, one bullet per item) instead of two separate line-lists. The highlighter is a `<pre>` sitting exactly under a transparent-text `<textarea>`, so typing stays completely native — no caret tricks, no lost undo history — and every font/padding/line-height metric is matched between the two layers so the colours cannot drift off the text.",
+        "Toolbar: S/M/L/XL type size (persisted), **copy** (the whole spec to the clipboard — pasting it into a Claude session is a first-class exit, not an afterthought), cancel, and save (also ⌘/Ctrl-S). Unsaved edits are guarded on tab change, node change, close, Esc, SPA navigation, and page unload. The drawer widens while editing.",
+        "One save now writes BOTH halves: the save route accepts `{ node, invariants, flair }` and rewrites `requirements.md` `## Constraints` and `design.md` `## Flair` in the same call (the older `{ section, items }` form still works). `scaffold.js` owns the document grammar and sends plain arrays — the server never parses Markdown, which keeps the bounded-writes safety property simple to audit."
+      ]
+    },
     {
       "version": "2026-08-23",
       "notes": [

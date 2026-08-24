@@ -7,6 +7,13 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-08-24
+
+- **Scaffold editor rebuilt around a real syntax-highlighted Markdown editor.** The whole spec is now **one document** — `## MUST NEVER CHANGE` → invariants, `## CAN CHANGE` → flair, one bullet per item — instead of two separate line-lists. The highlighter is a `<pre>` sitting exactly under a transparent-text `<textarea>`, so typing stays completely native (no caret tricks, no lost undo history), and every font/padding/line-height metric is matched between the two layers so the colours can't drift off the text.
+- **Toolbar:** S/M/L/XL type size (persisted), **copy** (the whole spec to the clipboard — pasting it into a Claude session is a first-class exit, not an afterthought), cancel, and save (also ⌘/Ctrl-S). Unsaved edits are guarded on tab change, node change, close, Esc, SPA navigation, and page unload. The drawer widens while editing.
+- **One save writes both halves.** The save route accepts `{ node, invariants, flair }` and rewrites `requirements.md ## Constraints` and `design.md ## Flair` in the same call (the older `{ section, items }` form still works). `scaffold.js` owns the document grammar and sends plain arrays — the server never parses Markdown, keeping the bounded-writes safety property simple to audit.
+
+
 ## 2026-08-23
 
 - **The Scaffold** — a fourth surface: in-app, dev-only **spec devtools**. New prebuilt overlay **`scaffold.js`** (self-contained, Shadow-DOM isolated, zero-dependency, ships at the repo root like `canvas.html`): a "⌂ Scaffold" pill on every page opens a drawer showing the **current page's node** from `FEATURE_TREE.json` — spec at a glance, plus two editable sections in ELI5 language with IDE-style syntax coloring: **Invariants** (the non-negotiables, from `requirements.md ## Constraints` — *rules this page must never break; Claude treats these as law*) and **Flair** (choices Claude made that were never specified, plus everything else non-invariant, saved to `design.md ## Flair` — *edit freely; nothing sacred here*). Also an all-specs browser (search, grouped by room) and a Requests tab.

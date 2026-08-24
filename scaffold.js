@@ -3,8 +3,8 @@
  *
  * Devtools for your specs: a collapsible pill → drawer that shows the CURRENT
  * page's node from FEATURE_TREE.json, its Invariants (non-negotiables) and
- * Flair (Claude's changeable choices) in an IDE-colored, plain-language editor,
- * plus an all-specs browser and a request queue Claude reads next session.
+ * Flair (Claude's changeable choices), and a syntax-highlighted editor for both
+ * as one Markdown document — read it, edit it, copy it straight into Claude Code.
  *
  * Self-contained, zero-dependency, Shadow-DOM isolated. Served by the host at
  * /__scaffold/scaffold.js (dev-only, env-gated) per .github/skills/scaffolding/SKILL.md.
@@ -17,14 +17,15 @@
   window.__AGENT0_SCAFFOLD__ = 1;
 
   const BASE = "/__scaffold";
-  const LS_OPEN = "a0scaffold.open", LS_TAB = "a0scaffold.tab";
+  const LS_OPEN = "a0scaffold.open", LS_TAB = "a0scaffold.tab", LS_FS = "a0scaffold.fs";
 
   const S = {
     data: null, err: null,
     open: localStorage.getItem(LS_OPEN) === "1",
     tab: localStorage.getItem(LS_TAB) || "page",
     nodeId: null,           // manual node selection (null = follow the route)
-    editInv: false, editFlair: false,
+    editing: false, doc: "", dirty: false,
+    fs: +localStorage.getItem(LS_FS) || 12.5,
     q: "", qFocus: false,
     toast: null, toastBad: false, toastTimer: 0,
     saving: false,
@@ -63,12 +64,12 @@
     return Math.floor(h / 24) + "d ago";
   }
 
-  /* IDE-ish highlighting: code ticks / keywords / paths / strings / numbers.
+  /* IDE-ish inline highlighting: code ticks / keywords / paths / strings / numbers.
      Split on `code` spans first so later passes never touch their contents. */
   function hl(raw) {
     return String(raw == null ? "" : raw).split(/(`[^`]+`)/).map(p => {
       if (p.length > 2 && p.startsWith("`") && p.endsWith("`"))
-        return `<span class="c-code">${esc(p.slice(1, -1))}</span>`;
+        return '<span class="c-code">' + esc(p.slice(1, -1)) + "</span>";
       let t = esc(p);
       t = t.replace(/\b(MUST NOT|MUST NEVER|DO NOT|MUST|NEVER|ALWAYS|ONLY|REQUIRED|CANNOT|SHALL)\b/g, '<span class="c-kw">$1</span>');
       t = t.replace(/(^|[\s(])([\w.-]+\/[\w./-]+|[\w-]+\.(?:jsx?|tsx?|cjs|mjs|css|md|json|sql|py|html))\b/g, '$1<span class="c-str">$2</span>');
@@ -76,6 +77,67 @@
       t = t.replace(/\b(\d+(?:\.\d+)?)(ms|s|px|%|x)?\b/g, '<span class="c-num">$1$2</span>');
       return t;
     }).join("");
+  }
+
+  /* ---------------- the spec document: node <-> markdown ----------------
+     One document holds both halves, the way a spec reads on paper. The two
+     headings are the only structure that matters; everything else is prose. */
+  const H_INV = "## MUST NEVER CHANGE";
+  const H_FLR = "## CAN CHANGE";
+  const CAP_INV = "*Rules this page must never break. Claude treats these as law.*";
+  const CAP_FLR = "*Choices Claude made that you never asked for. Edit freely.*";
+
+  function docFromNode(n) {
+    const inv = n.invariants || [], flr = flairOf(n);
+    const L = ["# " + (n.title || n.id), ""];
+    L.push(H_INV, "", CAP_INV, "");
+    if (inv.length) inv.forEach(i => L.push("- " + i)); else L.push("- ");
+    L.push("", H_FLR, "", CAP_FLR, "");
+    if (flr.length) flr.forEach(i => L.push("- " + i)); else L.push("- ");
+    return L.join("\n") + "\n";
+  }
+
+  function parseDoc(md) {
+    const out = { invariants: [], flair: [] };
+    let sec = null;
+    String(md).split("\n").forEach(line => {
+      const h = line.match(/^##\s+(.*)$/);
+      if (h) {
+        const u = h[1].toUpperCase();
+        sec = (u.indexOf("NEVER") >= 0 || u.indexOf("INVARIANT") >= 0) ? "invariants"
+            : (u.indexOf("CAN CHANGE") >= 0 || u.indexOf("FLAIR") >= 0) ? "flair" : null;
+        return;
+      }
+      if (/^#\s/.test(line) || !sec) return;
+      const t = line.trim();
+      if (!t) return;
+      if (t.length > 1 && t.startsWith("*") && t.endsWith("*")) return;   // caption line
+      const v = t.replace(/^[-*]\s*/, "").trim();
+      if (v) out[sec].push(v);
+    });
+    return out;
+  }
+
+  /* line-level highlighting for the editor overlay */
+  function hiDoc(src) {
+    let sec = null;
+    return String(src).split("\n").map(line => {
+      if (/^#\s/.test(line)) return '<span class="h-title">' + esc(line) + "</span>";
+      const h = line.match(/^##\s+(.*)$/);
+      if (h) {
+        const u = h[1].toUpperCase();
+        sec = (u.indexOf("NEVER") >= 0 || u.indexOf("INVARIANT") >= 0) ? "inv"
+            : (u.indexOf("CAN CHANGE") >= 0 || u.indexOf("FLAIR") >= 0) ? "flr" : null;
+        return '<span class="h-sec-' + (sec || "x") + '">' + esc(line) + "</span>";
+      }
+      const t = line.trim();
+      if (t.length > 1 && t.startsWith("*") && t.endsWith("*"))
+        return '<span class="h-cap">' + esc(line) + "</span>";
+      const b = line.match(/^(\s*[-*]\s+)(.*)$/);
+      if (b) return '<span class="h-bul">' + esc(b[1]) + "</span>"
+        + '<span class="h-' + (sec || "x") + '">' + hl(b[2]) + "</span>";
+      return hl(line);
+    }).join("\n");
   }
 
   /* ---------------- route → node matching ---------------- */
@@ -135,22 +197,21 @@
     render();
   }
 
-  async function saveSection(section, items) {
+  async function saveDoc() {
     const n = cur(); if (!n || S.saving) return;
+    const parsed = parseDoc(S.doc);
     S.saving = true; render();
     try {
-      const res = await post("/save", { node: n.id, section, items });
-      S.editInv = S.editFlair = false;
+      const res = await post("/save", { node: n.id, invariants: parsed.invariants, flair: parsed.flair });
+      S.editing = false; S.dirty = false;
       await refresh();
       // the tree JSON regenerates only at the next /feature-tree — until then,
       // keep showing what was just written to the spec files
       const fresh = byId()[n.id];
-      if (fresh && res.mode === "saved") {
-        if (section === "invariants") fresh.invariants = items; else fresh.flair = items;
-      }
+      if (fresh && res.mode === "saved") { fresh.invariants = parsed.invariants; fresh.flair = parsed.flair; }
       toast(res.mode === "queued"
         ? "Not spec'd yet — handed to Claude's next session (no AI call made)"
-        : "Saved to your repo · flagged for Claude to review next session");
+        : "Saved · " + parsed.invariants.length + " invariants, " + parsed.flair.length + " flair");
     } catch (e) { toast("Save failed: " + e.message, true); }
     S.saving = false; render();
   }
@@ -193,9 +254,10 @@
       .dot { width: 8px; height: 8px; border-radius: 50%; }
       .rbadge { min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--amber);
         color: #0d1117; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-      .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147482999; width: min(410px, 94vw);
+      .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147482999; width: min(440px, 96vw);
         background: var(--bg); border-left: 1px solid var(--border); display: flex; flex-direction: column;
         box-shadow: -12px 0 40px rgba(0,0,0,.5); animation: slidein .18s ease-out; }
+      .drawer.wide { width: min(760px, 98vw); }
       @keyframes slidein { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
       .hd { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid var(--border);
         background: var(--panel); }
@@ -232,9 +294,6 @@
       .sech { display: flex; align-items: center; gap: 7px; padding: 9px 11px; background: var(--panel); cursor: pointer; }
       .sech .n { font-weight: 700; font-size: 12.5px; }
       .sech .cnt { font-size: 10.5px; color: var(--dim); }
-      .sech .ebtn { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--blue); cursor: pointer;
-        padding: 2px 8px; border-radius: 6px; }
-      .sech .ebtn:hover { background: var(--panel2); }
       .caret { color: var(--dim); font-size: 10px; }
       .secsub { padding: 0 11px 8px; font-size: 11px; color: var(--dim); line-height: 1.45; background: var(--panel); }
       .items { list-style: none; }
@@ -246,16 +305,49 @@
       .c-str { color: var(--green); }
       .c-num { color: var(--amber); }
       .c-code { color: var(--blue); background: #79c0ff14; padding: 0 3px; border-radius: 4px; }
-      .ed { padding: 9px 11px; border-top: 1px solid var(--border); }
-      .ed textarea { width: 100%; min-height: 110px; background: var(--bg); color: var(--text); border: 1px solid var(--border);
-        border-radius: 8px; padding: 8px; font: 12px ui-monospace, Consolas, monospace; line-height: 1.55; resize: vertical; }
-      .ed textarea:focus { outline: none; border-color: var(--blue); }
-      .edrow { display: flex; gap: 6px; align-items: center; margin-top: 7px; }
-      .save { padding: 6px 14px; border-radius: 7px; border: none; background: var(--green); color: #0d1117;
-        font: 700 12px system-ui, sans-serif; cursor: pointer; }
-      .cancel { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border); background: none;
-        color: var(--dim); font: 600 12px system-ui, sans-serif; cursor: pointer; }
-      .edhint { font-size: 10.5px; color: var(--dim); margin-left: auto; text-align: right; }
+
+      /* ── the editor: a <pre> highlighter sitting exactly under a transparent-text
+         <textarea>, so typing stays completely native — no caret tricks, no lost
+         undo history. Every metric below MUST match between the two layers or the
+         colours drift off the text. ───────────────────────────────────────────── */
+      .edbar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+      .edbar .grp { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+      .edbar .grp button { padding: 5px 9px; background: var(--panel); color: var(--dim); border: none;
+        border-right: 1px solid var(--border); font: 600 11px system-ui, sans-serif; cursor: pointer; }
+      .edbar .grp button:last-child { border-right: none; }
+      .edbar .grp button.on { background: var(--panel2); color: var(--text); }
+      .edbar .grp button:hover { color: var(--text); }
+      .ebtn { padding: 6px 12px; border-radius: 7px; border: 1px solid var(--border); background: var(--panel);
+        color: var(--text); font: 600 11.5px system-ui, sans-serif; cursor: pointer; }
+      .ebtn:hover { border-color: var(--dim); background: var(--panel2); }
+      .ebtn.primary { background: var(--green); color: #0d1117; border-color: var(--green); }
+      .ebtn.primary:disabled { opacity: .55; cursor: default; }
+      .ebtn.ghost { color: var(--dim); }
+      .edbar .sp { margin-left: auto; }
+      .dirty { font: 500 10.5px/1 var(--f-mono, ui-monospace); color: var(--amber); }
+      .ed { position: relative; border: 1px solid var(--border); border-radius: 8px; background: #0a0e14;
+        overflow: hidden; }
+      .ed textarea, .ed pre { margin: 0; padding: 12px 13px; border: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: var(--fs, 12.5px); line-height: 1.62; tab-size: 2;
+        white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; }
+      .ed pre { position: absolute; inset: 0; overflow: auto; color: #c9d1d9; pointer-events: none; }
+      .ed textarea { position: relative; width: 100%; height: var(--eh, 56vh); display: block;
+        background: transparent; color: transparent; caret-color: var(--text); resize: vertical;
+        overflow: auto; outline: none; }
+      .ed textarea::selection { background: #31507a; color: transparent; }
+      .h-title { color: #f0f0f8; font-weight: 700; }
+      .h-sec-inv { color: var(--red); font-weight: 700; }
+      .h-sec-flr { color: var(--violet); font-weight: 700; }
+      .h-sec-x { color: var(--blue); font-weight: 700; }
+      .h-cap { color: #6e7b8a; font-style: italic; }
+      .h-bul { color: #4d5866; }
+      .h-inv { color: #ffd7d2; }
+      .h-flr { color: #e6d6ff; }
+      .h-x { color: #c9d1d9; }
+      .edhelp { font-size: 10.5px; color: var(--dim); line-height: 1.5; margin-top: 8px; }
+      .edhelp code { color: var(--blue); font-family: ui-monospace, Consolas, monospace; }
+
       .search { width: 100%; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel);
         color: var(--text); font: 12.5px system-ui, sans-serif; margin-bottom: 11px; }
       .search:focus { outline: none; border-color: var(--blue); }
@@ -284,7 +376,7 @@
       .empty-tab { color: var(--dim); font-size: 12.5px; text-align: center; padding: 26px 12px; line-height: 1.6; }
       .ft { padding: 7px 14px; border-top: 1px solid var(--border); background: var(--panel); font-size: 10px;
         color: var(--dim); display: flex; gap: 6px; align-items: center; }
-      .toast { position: fixed; right: 16px; bottom: 62px; z-index: 2147483001; max-width: 320px; padding: 9px 13px;
+      .toast { position: fixed; right: 16px; bottom: 62px; z-index: 2147483001; max-width: 340px; padding: 9px 13px;
         border-radius: 9px; background: var(--panel2); border: 1px solid var(--green); color: var(--text);
         font: 12px system-ui, sans-serif; box-shadow: 0 6px 22px rgba(0,0,0,.5); animation: slidein .15s ease-out; }
       .toast.bad { border-color: var(--red); }
@@ -293,6 +385,7 @@
       .errbox b { color: var(--red); }
       .errbox code { color: var(--blue); font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
       .link { color: var(--blue); cursor: pointer; font-weight: 600; }
+      @media (prefers-reduced-motion: reduce) { .drawer, .toast { animation: none; } }
     </style>`;
   }
 
@@ -321,40 +414,46 @@
     </div>`;
   }
 
-  function section(key, n) {
+  function readSection(key, n) {
     const isInv = key === "inv";
     const items = isInv ? (n.invariants || []) : flairOf(n);
     const open = secState[key];
-    const canEdit = editable();
-    const editing = isInv ? S.editInv : S.editFlair;
     const meta = isInv
-      ? { icon: "🔒", name: "Invariants", cls: "inv", sub: "The non-negotiables. Rules this page must never break — Claude treats these as law.", dest: "requirements.md → ## Constraints" }
-      : { icon: "🎨", name: "Flair", cls: "flr", sub: "Claude's choices — things it decided that you never asked for, plus the rest of the spec's notes. Edit freely; nothing sacred here.", dest: "design.md → ## Flair" };
-    let body = "";
-    if (open && !editing) {
-      body = `<ul class="items ${meta.cls}">${items.length
-        ? items.map(i => `<li>${hl(i)}</li>`).join("")
-        : `<li class="empty">${isInv ? "None pinned yet. Add the rules that must never break." : "Nothing here yet. Claude's unrequested choices will collect here."}</li>`}</ul>`;
-    }
-    if (open && editing) {
-      body = `<div class="ed">
-        <textarea id="ta-${key}" spellcheck="false">${esc(items.join("\n"))}</textarea>
-        <div class="edrow">
-          <button class="save" data-act="save-${key}" ${S.saving ? "disabled" : ""}>${S.saving ? "Saving…" : "Save"}</button>
-          <button class="cancel" data-act="cancel-edit">Cancel</button>
-          <span class="edhint">one per line · ${specd(n) ? "saves to " + meta.dest : "queued for Claude (not spec'd yet)"}</span>
-        </div>
-      </div>`;
-    }
+      ? { icon: "🔒", name: "Invariants", cls: "inv", sub: "The non-negotiables. Rules this page must never break — Claude treats these as law." }
+      : { icon: "🎨", name: "Flair", cls: "flr", sub: "Claude's choices — things it decided that you never asked for. Edit freely; nothing sacred here." };
     return `<div class="sec">
       <div class="sech" data-act="fold" data-key="${key}">
         <span class="caret">${open ? "▼" : "▶"}</span><span>${meta.icon}</span>
         <span class="n">${meta.name}</span><span class="cnt">${items.length}</span>
-        ${canEdit && open ? `<span class="ebtn" data-act="edit-${key}">${editing ? "" : "✏️ Edit"}</span>` : ""}
       </div>
-      ${open ? `<div class="secsub">${meta.sub}</div>` : ""}
-      ${body}
+      ${open ? `<div class="secsub">${meta.sub}</div>
+      <ul class="items ${meta.cls}">${items.length
+        ? items.map(i => `<li>${hl(i)}</li>`).join("")
+        : `<li class="empty">${isInv ? "None pinned yet." : "Nothing here yet."}</li>`}</ul>` : ""}
     </div>`;
+  }
+
+  const SIZES = [["S", 11.5], ["M", 12.5], ["L", 14.5], ["XL", 17]];
+
+  function editorView(n) {
+    return `<div class="edbar">
+        <div class="grp">${SIZES.map(([lbl, px]) =>
+          `<button data-act="fs" data-px="${px}" class="${S.fs === px ? "on" : ""}">${lbl}</button>`).join("")}</div>
+        <button class="ebtn" data-act="copy" title="Copy the whole spec — paste it straight into Claude Code">copy</button>
+        <span class="sp"></span>
+        ${S.dirty ? `<span class="dirty">unsaved</span>` : ""}
+        <button class="ebtn ghost" data-act="cancel">cancel</button>
+        <button class="ebtn primary" data-act="save" ${S.saving ? "disabled" : ""}>${S.saving ? "saving…" : "save"}</button>
+      </div>
+      <div class="ed" id="ed" style="--fs:${S.fs}px">
+        <pre id="hl" aria-hidden="true"></pre>
+        <textarea id="md" spellcheck="false"></textarea>
+      </div>
+      <p class="edhelp">
+        Two headings carry the meaning: <code>## MUST NEVER CHANGE</code> → invariants
+        (<code>requirements.md</code>), <code>## CAN CHANGE</code> → flair (<code>design.md</code>).
+        One bullet per item. ${specd(n) ? "" : "This node has no spec yet — saving queues the text for Claude instead of writing files."}
+      </p>`;
   }
 
   function pageTab() {
@@ -365,8 +464,9 @@
         <span class="mono">.github/scaffolding/routes.json</span>, or ask Claude to chart it:</div>
         <div class="acts"><button class="abtn" data-act="req-cover">📸 Cover this page</button>
         <button class="abtn" data-act="req-spec">📝 Spec it</button></div>
-        <div class="acap">Buttons don't call any AI — they queue a request Claude picks up next session (it shows in /standup).</div>`;
+        <div class="acap">Buttons don't call any AI — they queue a request Claude picks up next session.</div>`;
     }
+    if (S.editing) return editorView(n);
     const auto = !S.nodeId;
     return `
       <div style="display:flex;align-items:center;margin-bottom:8px;font-size:11px;color:var(--dim)">
@@ -380,8 +480,12 @@
         <button class="abtn" data-act="req-spec" title="Write a full contract">📝 Spec it</button>
       </div>
       <div class="acap">These queue a request for Claude's next session — no AI is called now.</div>
-      ${section("inv", n)}
-      ${section("flair", n)}`;
+      <div class="acts">
+        <button class="abtn" data-act="edit" style="flex:2">✏️ Edit spec</button>
+        <button class="abtn" data-act="copy-read" title="Copy the spec as Markdown">⧉ Copy</button>
+      </div>
+      ${readSection("inv", n)}
+      ${readSection("flair", n)}`;
   }
 
   function allTab() {
@@ -424,8 +528,8 @@
       : `<div class="empty-tab">Nothing queued.<br>Buttons on the <b>This page</b> tab add requests here;<br>Claude sees them at the next <span class="mono">/standup</span>.</div>`}
       <div class="note">
         <textarea id="ta-note" placeholder="Note to Claude — anything you noticed on this page…"></textarea>
-        <div class="edrow"><button class="save" data-act="req-note">Queue note</button>
-        <span class="edhint">read next session · no AI call now</span></div>
+        <div class="edbar" style="margin-top:7px"><button class="ebtn primary" data-act="req-note">Queue note</button>
+        <span class="edhelp" style="margin:0 0 0 8px">read next session · no AI call now</span></div>
       </div>`;
   }
 
@@ -441,7 +545,7 @@
     } else {
       body = S.tab === "all" ? allTab() : S.tab === "req" ? reqTab() : pageTab();
     }
-    return `<div class="drawer">
+    return `<div class="drawer${S.editing ? " wide" : ""}">
       <div class="hd"><span>⌂</span><span class="ttl">Scaffold</span>
         <span class="route mono" title="${esc(location.pathname)}">${esc(location.pathname)}</span>
         <span class="x" data-act="toggle" title="Close (Esc)">✕</span></div>
@@ -463,10 +567,23 @@
       <span class="dot" style="background:${dotColor}"></span>⌂ Scaffold${rs ? `<span class="rbadge">${rs}</span>` : ""}</button>`;
   }
 
+  /* keep the highlighter under the caret in sync — never re-renders the panel,
+     so focus, selection and undo history all survive typing */
+  function sync() {
+    const t = root.querySelector("#md"), h = root.querySelector("#hl");
+    if (!t || !h) return;
+    h.innerHTML = hiDoc(t.value) + "\n ";
+    h.scrollTop = t.scrollTop; h.scrollLeft = t.scrollLeft;
+  }
+
   function render() {
     if (!root) return;
     root.innerHTML = `<div class="wrap">${css()}${S.open ? drawer() : ""}${pill()}
       ${S.toast ? `<div class="toast ${S.toastBad ? "bad" : ""}">${esc(S.toast)}</div>` : ""}</div>`;
+    if (S.open && S.editing) {
+      const ta = root.querySelector("#md");
+      if (ta) { ta.value = S.doc; sync(); ta.focus(); }
+    }
     if (S.open && S.tab === "all" && S.qFocus) {
       const q = root.querySelector("#q");
       if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
@@ -477,6 +594,28 @@
   function persist() {
     localStorage.setItem(LS_OPEN, S.open ? "1" : "0");
     localStorage.setItem(LS_TAB, S.tab);
+    localStorage.setItem(LS_FS, String(S.fs));
+  }
+
+  function copyText(t, msg) {
+    const done = () => toast(msg || "Copied — paste it into Claude Code");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, () => fallback());
+    } else fallback();
+    function fallback() {
+      const a = document.createElement("textarea");
+      a.value = t; a.style.position = "fixed"; a.style.opacity = "0";
+      document.body.appendChild(a); a.select();
+      try { document.execCommand("copy"); done(); } catch (e) { toast("Copy failed", true); }
+      document.body.removeChild(a);
+    }
+  }
+
+  function leaveEdit(next) {
+    if (S.dirty && !confirm("Unsaved spec edits. Discard them?")) return false;
+    S.editing = false; S.dirty = false;
+    if (next) next();
+    return true;
   }
 
   function onClick(e) {
@@ -484,20 +623,34 @@
     if (!el) return;
     const act = el.dataset.act;
     S.qFocus = false;
-    if (act === "toggle") { S.open = !S.open; persist(); render(); }
-    else if (act === "tab") { S.tab = el.dataset.tab; persist(); render(); }
-    else if (act === "pick") { S.nodeId = el.dataset.id; S.tab = "page"; S.editInv = S.editFlair = false; persist(); render(); }
-    else if (act === "fold") {
-      if (e.composedPath().some(x => x && x.dataset && (x.dataset.act || "").startsWith("edit-"))) return;
-      secState[el.dataset.key] = !secState[el.dataset.key]; render();
+    if (act === "toggle") {
+      if (S.editing && !leaveEdit()) return;
+      S.open = !S.open; persist(); render();
     }
-    else if (act === "edit-inv") { S.editInv = true; S.editFlair = false; render(); }
-    else if (act === "edit-flair") { S.editFlair = true; S.editInv = false; render(); }
-    else if (act === "cancel-edit") { S.editInv = S.editFlair = false; render(); }
-    else if (act === "save-inv" || act === "save-flair") {
-      const ta = root.querySelector(act === "save-inv" ? "#ta-inv" : "#ta-flair");
-      const items = (ta ? ta.value : "").split("\n").map(s => s.trim().replace(/^[-*]\s+/, "")).filter(Boolean);
-      saveSection(act === "save-inv" ? "invariants" : "flair", items);
+    else if (act === "tab") {
+      if (S.editing && !leaveEdit()) return;
+      S.tab = el.dataset.tab; persist(); render();
+    }
+    else if (act === "pick") {
+      if (S.editing && !leaveEdit()) return;
+      S.nodeId = el.dataset.id; S.tab = "page"; persist(); render();
+    }
+    else if (act === "fold") { secState[el.dataset.key] = !secState[el.dataset.key]; render(); }
+    else if (act === "edit") {
+      const n = cur(); if (!n) return;
+      S.doc = docFromNode(n); S.editing = true; S.dirty = false; render();
+    }
+    else if (act === "cancel") { if (leaveEdit()) render(); }
+    else if (act === "save") saveDoc();
+    else if (act === "copy") copyText(root.querySelector("#md").value);
+    else if (act === "copy-read") { const n = cur(); if (n) copyText(docFromNode(n)); }
+    else if (act === "fs") {
+      S.fs = +el.dataset.px; persist();
+      const ed = root.querySelector("#ed");
+      if (ed) ed.style.setProperty("--fs", S.fs + "px");
+      root.querySelectorAll('[data-act="fs"]').forEach(b =>
+        b.classList.toggle("on", +b.dataset.px === S.fs));
+      sync();
     }
     else if (act === "req-cover") queueReq("cover");
     else if (act === "req-verify") queueReq("verify");
@@ -512,11 +665,29 @@
 
   function onInput(e) {
     const el = e.composedPath()[0];
-    if (el && el.dataset && el.dataset.act === "q") { S.q = el.value; S.qFocus = true; render(); }
+    if (!el || !el.dataset) return;
+    if (el.id === "md") {
+      S.doc = el.value;
+      if (!S.dirty) {                       // first keystroke: surface the unsaved marker
+        S.dirty = true;
+        const bar = root.querySelector(".edbar .sp");
+        if (bar && !root.querySelector(".dirty")) {
+          const s = document.createElement("span");
+          s.className = "dirty"; s.textContent = "unsaved";
+          bar.insertAdjacentElement("afterend", s);
+        }
+      }
+      sync();
+      return;
+    }
+    if (el.dataset.act === "q") { S.q = el.value; S.qFocus = true; render(); }
   }
 
   /* ---------------- SPA navigation tracking ---------------- */
-  function onNav() { S.nodeId = null; S.editInv = S.editFlair = false; render(); }
+  function onNav() {
+    if (S.editing && S.dirty) return;      // don't yank a spec out from under an edit
+    S.nodeId = null; S.editing = false; render();
+  }
   ["pushState", "replaceState"].forEach(k => {
     const orig = history[k];
     history[k] = function () { const r = orig.apply(this, arguments); window.dispatchEvent(new Event("a0scaffold:nav")); return r; };
@@ -532,8 +703,17 @@
     (document.body || document.documentElement).appendChild(host);
     root.addEventListener("click", onClick);
     root.addEventListener("input", onInput);
+    root.addEventListener("scroll", e => {
+      const el = e.composedPath()[0];
+      if (el && el.id === "md") sync();
+    }, true);
     window.addEventListener("keydown", e => {
-      if (e.key === "Escape" && S.open) { S.open = false; persist(); render(); }
+      if (e.key === "Escape" && S.open) { if (S.editing && !leaveEdit()) return; S.open = false; persist(); render(); }
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === "s" && S.open && S.editing) { e.preventDefault(); saveDoc(); }
+    });
+    window.addEventListener("beforeunload", e => {
+      if (S.editing && S.dirty) { e.preventDefault(); e.returnValue = ""; }
     });
   }
 
@@ -542,7 +722,7 @@
     mount();
     render();
     // internal hook for tests/debugging — not a public API
-    window.__AGENT0_SCAFFOLD_API = { S, render, matchNode, cur, refresh };
+    window.__AGENT0_SCAFFOLD_API = { S, render, matchNode, cur, refresh, docFromNode, parseDoc, hiDoc, sync };
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
