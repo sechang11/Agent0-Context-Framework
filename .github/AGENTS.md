@@ -158,6 +158,7 @@ Two paths depending on whether the feature is greenfield or brownfield. Both con
 
 **Greenfield — new work, written before code:**
 
+0. **Grill** *(when a wrong assumption would be expensive — a schema, an API contract, a wide refactor)* — `/grill {feature}` interrogates the idea one question at a time and writes `grill.md`. Optional, but it's the cheapest step here: `/spec` builds from its decisions instead of from assumptions.
 1. **Spec** — `/spec` for non-trivial work.
 2. **Architect review** — `@architect` approves the design before implementation.
 3. **Implementation** — match existing patterns; tests as you go.

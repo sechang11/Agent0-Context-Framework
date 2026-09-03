@@ -7,6 +7,14 @@ This file is **derived from `MANIFEST.json`** — the `changelog` array there is
 Versions are dated (`YYYY-MM-DD`). Multiple releases on the same day get a letter suffix (`2026-05-15a`, `2026-05-15b`).
 
 
+## 2026-09-03
+
+- **New command `/grill`** — interrogate an idea **before** it becomes a spec. One question at a time, each carrying a **recommended answer** and a line on why it matters, walking the decision tree (scope → the cheaper alternative → the seam → invariants → data & contracts → failure modes → verification → sequencing) until every branch is resolved. The recommended answer is the load-bearing detail: it lets you say "yes, next" to what you don't care about and spend attention on what you do — which is what makes a thirty-question session survivable.
+- **Grounded, not Socratic.** Phase 1 reads `copilot-instructions.md`, the architecture instructions, and `FEATURE_TREE.json` first, so questions name real nodes, real transitive-dependent counts, real recorded invariants, and real open bugs — *"`platform-token-wallet` owns balance writes and has 24 dependents; does this write balances or ask it to?"* rather than *"have you considered security?"*
+- **The output is a durable decision record.** `.github/specs/{feature}/grill.md` holds the shape of it, every decision **with its reason** (including where Claude recommended otherwise), the invariants it establishes, explicit non-goals, and anything still open. **`/spec` now reads it first** and builds `requirements.md` from those decisions — established invariants become `## Constraints` carrying their reasons — instead of re-asking. When no `grill.md` exists and the work is large or touches money/auth/data, `/spec` offers to grill first.
+- A spec directory holding only a `grill.md` is a valid outcome: the thinking was done and *"not yet"* was the decision. Flags: `--quick`, `--resume`, `--spec`. The interrogation pattern is adapted from [Matt Pocock's `grill-me` skill](https://claudemarketplaces.com/skills/mattpocock/skills/grill-me); in Agent0's vocabulary it's a command, since skills here are domain-knowledge packages.
+
+
 ## 2026-08-24
 
 - **Scaffold editor rebuilt around a real syntax-highlighted Markdown editor.** The whole spec is now **one document** — `## MUST NEVER CHANGE` → invariants, `## CAN CHANGE` → flair, one bullet per item — instead of two separate line-lists. The highlighter is a `<pre>` sitting exactly under a transparent-text `<textarea>`, so typing stays completely native (no caret tricks, no lost undo history), and every font/padding/line-height metric is matched between the two layers so the colours can't drift off the text.

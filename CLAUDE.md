@@ -59,7 +59,8 @@ Claude Code commands live in `.claude/commands/`. Each delegates to its `.github
 | Command | Purpose |
 |---------|---------|
 | `/adopt-framework` | One-shot adoption — explore the codebase, interview, fill PROJECT slots |
-| `/spec` | Generate `requirements.md` + `design.md` + `tasks.md` for non-trivial work |
+| `/grill` | Interrogate an idea **before** it becomes a spec — one grounded question at a time, each with a recommended answer, until every branch is resolved. Reads `FEATURE_TREE.json` first so questions name real nodes and real blast radius. Writes `.github/specs/{feature}/grill.md` (decisions + the reason for each), which `/spec` builds from. Flags: `--quick`, `--resume`, `--spec` |
+| `/spec` | Generate `requirements.md` + `design.md` + `tasks.md` for non-trivial work. Reads `grill.md` first when one exists |
 | `/agents` | List the agents assigned to this project, one specialty line each |
 | `/report` | Convene agents for a roundtable progress review; writes `PROGRESS_REPORT.md`. Supports `--only` / `--exclude` to filter agents |
 | `/nextsteps` | Focused "what to work on next" — no ratings or gaps, just prioritized action items per agent. Writes `NEXT_STEPS.md`. Supports same filters as `/report` plus `--horizon short\|medium\|long` |

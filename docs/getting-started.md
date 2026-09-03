@@ -68,6 +68,18 @@ Slash commands run pre-written workflows. Type them at the start of a message. M
 
 Organized by goal:
 
+### "I want to pressure-test an idea before I build it"
+
+```
+/grill payout-requests             # full interrogation
+/grill payout-requests --quick     # the highest-leverage 8-12 questions
+/grill payout-requests --spec      # interrogate, then write the spec
+```
+
+Claude interrogates *you*, one question at a time, each with a **recommended answer** attached so you can say "yes, next" to the ones you don't care about and spend your attention on the ones you do. It reads the map first, so the questions are about your actual codebase — which existing node owns this, how many things depend on it, what invariant you'd be breaking — not generic checklist questions.
+
+Use it when a wrong assumption costs more than the questions: before a schema, before an API contract freezes, before a wide refactor, or before writing a spec you'll live with. It writes `.github/specs/{feature}/grill.md` — every decision with the *reason* behind it — and `/spec` builds from that instead of asking you again. Stopping after the grill is a perfectly good outcome: you now know what you'd be building, and "not yet" is a decision.
+
 ### "I want to start a new feature"
 
 ```

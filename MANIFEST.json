@@ -1,6 +1,6 @@
 {
   "name": "Agent0-Context-Framework",
-  "version": "2026-08-24",
+  "version": "2026-09-03",
   "repo": "sechang11/Agent0-Context-Framework",
   "branch": "main",
   "raw_base": "https://raw.githubusercontent.com/sechang11/Agent0-Context-Framework/main/",
@@ -29,6 +29,7 @@
     { "path": ".claude/commands/nextsteps.md",          "class": "additive" },
     { "path": ".claude/commands/feature-tree.md",       "class": "additive" },
     { "path": ".claude/commands/standup.md",            "class": "additive" },
+    { "path": ".claude/commands/grill.md",              "class": "additive" },
     { "path": ".claude/commands/install-scaffold.md",   "class": "additive" },
     { "path": ".claude/commands/demolish-scaffold.md",  "class": "additive" },
 
@@ -50,6 +51,7 @@
     { "path": ".github/prompts/nextsteps.prompt.md",           "class": "additive" },
     { "path": ".github/prompts/feature-tree.prompt.md",        "class": "additive" },
     { "path": ".github/prompts/standup.prompt.md",             "class": "additive" },
+    { "path": ".github/prompts/grill.prompt.md",               "class": "additive" },
     { "path": ".github/prompts/install-scaffold.prompt.md",    "class": "additive" },
     { "path": ".github/prompts/demolish-scaffold.prompt.md",   "class": "additive" },
 
@@ -99,7 +101,8 @@
 
   "commands_table": [
     { "command": "/adopt-framework",   "purpose": "One-shot adoption — explore the codebase, interview, fill PROJECT slots" },
-    { "command": "/spec",              "purpose": "Generate `requirements.md` + `design.md` + `tasks.md` for non-trivial work" },
+    { "command": "/spec",              "purpose": "Generate `requirements.md` + `design.md` + `tasks.md` for non-trivial work. Reads grill.md first when one exists and builds from those decisions" },
+    { "command": "/grill",             "purpose": "Interrogate an idea before it becomes a spec — one grounded question at a time, each with a recommended answer, walking the decision tree until every branch is resolved. Reads FEATURE_TREE.json first so questions name real nodes and real blast radius. Writes .github/specs/{feature}/grill.md — decisions plus the reason for each — which /spec then builds from. No code, no spec. Flags: --quick, --resume, --spec. Interrogation pattern adapted from Matt Pocock's grill-me skill" },
     { "command": "/agents",            "purpose": "List the agents assigned to this project, one specialty line each" },
     { "command": "/report",            "purpose": "Convene every agent for a roundtable progress review; writes `PROGRESS_REPORT.md`" },
     { "command": "/update-framework",  "purpose": "Pull the latest additive files (commands, agent shims, manifest) from the public framework repo" },
@@ -121,6 +124,15 @@
   ],
 
   "changelog": [
+    {
+      "version": "2026-09-03",
+      "notes": [
+        "New command **/grill** — interrogate an idea BEFORE it becomes a spec. Asks one question at a time, each carrying a recommended answer and a line on why it matters, walking the decision tree (scope → the cheaper alternative → the seam → invariants → data & contracts → failure modes → verification → sequencing) until every branch is resolved. The recommended answer is the load-bearing detail: it lets you say 'yes, next' to what you don't care about and spend attention on what you do, which is what makes a thirty-question session survivable.",
+        "Grounded, not Socratic: Phase 1 reads copilot-instructions, the architecture instructions and FEATURE_TREE.json first, so questions name real nodes, real transitive-dependent counts, real recorded invariants and real open bugs — 'platform-token-wallet owns balance writes and has 24 dependents; does this write balances or ask it to?' rather than 'have you considered security?'.",
+        "Writes `.github/specs/{feature}/grill.md`: the shape of it, every decision WITH ITS REASON (including where Claude recommended otherwise), the invariants it establishes, explicit non-goals, and anything still open. /spec now reads grill.md first and builds requirements.md from it — decisions become Problem/Goals, established invariants become ## Constraints carrying their reasons, non-goals become ## Non-goals, open items become ## Open questions — instead of re-asking. When no grill.md exists and the work is large or touches money/auth/data, /spec now offers to grill first.",
+        "A spec directory holding only a grill.md is a valid outcome: it means the thinking was done and 'not yet' was the decision. Flags: --quick (the highest-leverage 8-12), --resume, --spec. The interrogation pattern is adapted from Matt Pocock's grill-me skill; in Agent0's vocabulary it's a command, since skills here are domain-knowledge packages."
+      ]
+    },
     {
       "version": "2026-08-24",
       "notes": [

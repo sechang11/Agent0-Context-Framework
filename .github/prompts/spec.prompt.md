@@ -21,6 +21,7 @@ Never combine them. Never put them inside a source directory. Use kebab-case for
 
 1. Confirm the feature name with the user if it's not obvious from the request.
 2. Read the relevant context before writing:
+   - `.github/specs/{feature-name}/grill.md` **first, if it exists** — the decision record from `/grill`. It already holds the resolved scope, the invariants and their reasons, the explicit non-goals, and anything left open. When it's there, **build from it rather than re-asking**: its decisions become `## Problem` / `## Goals`, its *"Invariants this establishes"* become `## Constraints` (carrying their reasons), its *"Explicitly not doing"* becomes `## Non-goals`, and its *"Still open"* becomes `## Open questions`. Only ask the user about things the grill genuinely left unresolved.
    - `.github/copilot-instructions.md` (always)
    - `.github/memory/{component}.md` for each component in scope (if memory files exist)
    - Any cross-component / relationships file (if it exists)
@@ -141,6 +142,8 @@ The optional `## Doing` / `## Next` sections below are the user's free-form queu
 - Feature name (kebab-case).
 - Which components are likely involved (your guess; user will correct).
 - Whether this is a behavior change that could be configuration vs a true platform change.
+
+If `grill.md` exists for this feature, these are already answered — don't ask again. If it doesn't, and the feature is large, touches money/auth/data, or has a contract that will be expensive to change later, **say so and offer `/grill {feature-name}` first**. A spec built on unexamined assumptions is a contract you'll fight later; one question now is cheaper.
 
 ## Regenerate the feature tree
 
